@@ -1,0 +1,37 @@
+---
+import '../styles/global.css';
+
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="ProfileHub Mini App" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<title>{title}</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+	</head>
+	<body>
+		<main class="container">
+      <slot /> 
+    </main>
+    <script is:inline>
+      // This script adapts the theme to match Telegram
+      try {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        const applyTheme = () => { document.documentElement.className = tg.colorScheme; };
+        tg.onEvent('themeChanged', applyTheme);
+        applyTheme();
+      } catch (e) {
+        console.warn('Telegram script not found.');
+        document.documentElement.className = 'light';
+      }
+    </script>
+	</body>
+</html>
