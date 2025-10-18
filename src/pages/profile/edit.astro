@@ -10,7 +10,9 @@ import MainLayout from '../../layouts/MainLayout.astro';
       <label>Username <input type="text" name="username" id="username" required /></label>
       <label>Bio <textarea name="bio" id="bio" rows="4" required></textarea></label>
       <label>Contact Link (Optional) <input type="url" name="contact_link" id="contact_link" placeholder="https://t.me/yourusername" /></label>
+      
       <p class="image-update-notice">To update your profile picture, please create a new profile for now.</p>
+      
       <div class="form-actions">
         <a href="/" class="btn btn-secondary">Cancel</a>
         <button type="submit" id="submit-btn" class="btn btn-primary">Save Changes</button>
@@ -21,8 +23,8 @@ import MainLayout from '../../layouts/MainLayout.astro';
 </MainLayout>
 
 <script>
-  // !!! BUG FIX 2: Wrap everything in DOMContentLoaded !!!
   document.addEventListener('DOMContentLoaded', () => {
+    // Selectors are unchanged
     const profileForm = document.getElementById('profile-form') as HTMLFormElement | null;
     const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement | null;
     const formStatus = document.getElementById('form-status') as HTMLDivElement | null;
@@ -35,7 +37,6 @@ import MainLayout from '../../layouts/MainLayout.astro';
       if(pageSubtitle) pageSubtitle.textContent = "This page can only be accessed from within Telegram.";
       return;
     }
-
     const tg = window.Telegram.WebApp;
 
     async function fetchProfileData() {
@@ -43,32 +44,25 @@ import MainLayout from '../../layouts/MainLayout.astro';
       
       try {
         const response = await fetch('/api/profiles/me', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ initData: tg.initData }),
         });
-
         if (!response.ok) {
           throw new Error('Could not fetch your profile. You may need to create one first.');
         }
-
         const data = await response.json();
         
-        // This logic is now guaranteed to work because the elements exist
+        // This is the correct logic for pre-filling
         usernameInput.value = data.profile.username || '';
         bioInput.value = data.profile.bio || '';
         contactLinkInput.value = data.profile.contact_link || '';
-
         profileForm.style.display = 'flex';
         pageSubtitle.textContent = 'Update your public information.';
-
       } catch (err) {
         const error = err as Error;
         pageSubtitle.textContent = `Error: ${error.message}`;
-        alert(`Error: ${error.message}`);
       }
     }
-
     fetchProfileData();
 
     profileForm?.addEventListener('submit', async (e) => {
@@ -95,9 +89,10 @@ import MainLayout from '../../layouts/MainLayout.astro';
 
         if (!response.ok) {
           const result = await response.json();
-          throw new Error(result.error);
+          throw new Error(result.error || 'Failed to save changes.');
         }
 
+        // The API now just returns a success message, which is all we need.
         alert('Profile updated successfully!');
         tg.close();
 
@@ -111,6 +106,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
   });
 </script>
 <style>
+  /* Styles are unchanged */
   .profile-page { max-width: 600px; margin: 0 auto; }
   .profile-page h1 { font-size: 2rem; }
   #page-subtitle { color: var(--hint-color); }

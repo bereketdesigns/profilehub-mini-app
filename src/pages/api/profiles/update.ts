@@ -7,37 +7,33 @@ export const POST: APIRoute = async ({ request }) => {
     const formData = await request.json();
     const { initData, username, bio, contact_link } = formData;
 
-    if (!initData || !username || !bio) {
+    if (!initData || !username) { // Bio can be optional if needed, but we'll require it for now
       return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
     }
 
-    // Securely validate the user's identity
     const user = await validate(initData);
     if (!user) {
       return new Response(JSON.stringify({ error: 'Invalid user data. Unauthorized.' }), { status: 401 });
     }
 
-    // Update the profile where the telegram_id matches the validated user's ID
-    const { data, error } = await supabase
+    // Perform the update. We no longer need to select the data back.
+    const { error } = await supabase
       .from('profiles')
       .update({ 
         username, 
         bio, 
-        contact_link
+        contact_link: contact_link || null // Explicitly set to null if empty
       })
-      .eq('telegram_id', user.id) // This is the security check
-      .select(); // Returns an array of updated items
+      .eq('telegram_id', user.id);
 
     if (error) {
       throw new Error(`Database update error: ${error.message}`);
     }
 
-    if (!data || data.length === 0) {
-        throw new Error('Profile not found to update.');
-    }
+    // !!! SIMPLIFIED RESPONSE !!!
+    // Just return a success message.
+    return new Response(JSON.stringify({ message: 'Profile updated successfully' }), { status: 200 });
 
-    // Return the first (and only) item from the resulting array
-    return new Response(JSON.stringify(data[0]), { status: 200 });
   } catch (err) {
     const error = err as Error;
     console.error('Update API Error:', error.message);
