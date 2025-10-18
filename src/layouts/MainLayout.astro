@@ -11,7 +11,7 @@ const { title } = Astro.props;
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="description" content="ProfileHub Mini App" />
-		<meta name="viewport" content="width=device-width, initial-scale-1.0, viewport-fit=cover" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<title>{title}</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 	</head>
@@ -20,55 +20,97 @@ const { title } = Astro.props;
       <slot /> 
     </main>
     
-    <!-- Floating "My Profile" Button -->
-    <a href="/me" class="fab" id="profile-fab">
-      <svg xmlns="http://www.w.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-      <span>My Profile</span>
+    <!-- !!! NEW: Both floating buttons are here, hidden by default !!! -->
+    <a href="/me" class="fab fab-create" id="fab-create" style="display: none;">
+      <span>Create Profile</span>
+    </a>
+    <a href="/edit" class="fab fab-edit" id="fab-edit" style="display: none;">
+      <span>Edit Profile</span>
     </a>
 
     <script is:inline>
-      const fab = document.getElementById('profile-fab');
+      // Function to check the user's profile status by calling our new API
+      async function checkProfileStatus(initData) {
+        const fabCreate = document.getElementById('fab-create');
+        const fabEdit = document.getElementById('fab-edit');
+        if (!fabCreate || !fabEdit) return;
+
+        try {
+          const response = await fetch('/api/profiles/me', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ initData: initData }),
+          });
+
+          const data = await response.json();
+
+          if (response.status === 404 && data.status === 'not_found') {
+            // User does NOT have a profile, show "Create" button
+            fabCreate.style.display = 'flex';
+          } else if (response.status === 200 && data.status === 'found') {
+            // User DOES have a profile, show "Edit" button
+            fabEdit.style.display = 'flex';
+          }
+          
+        } catch (error) {
+          console.error('Failed to check profile status:', error);
+          // Fallback: show the create button if the API fails
+          fabCreate.style.display = 'flex';
+        }
+      }
 
       function setupTelegramIntegration() {
         try {
           const tg = window.Telegram.WebApp;
           tg.ready();
           
-          // Color the FAB with the theme button color from Telegram
-          if (fab) {
-            fab.style.backgroundColor = tg.themeParams.button_color || '#007aff';
-            fab.style.color = tg.themeParams.button_text_color || '#ffffff';
+          const fabCreate = document.getElementById('fab-create');
+          const fabEdit = document.getElementById('fab-edit');
+
+          // Color the FABs with the theme colors
+          const buttonColor = tg.themeParams.button_color || '#007aff';
+          const textColor = tg.themeParams.button_text_color || '#ffffff';
+          if (fabCreate) {
+            fabCreate.style.backgroundColor = buttonColor;
+            fabCreate.style.color = textColor;
           }
-          
+          if (fabEdit) {
+            fabEdit.style.backgroundColor = buttonColor;
+            fabEdit.style.color = textColor;
+          }
+
           const applyTheme = () => { document.documentElement.className = tg.colorScheme; };
           tg.onEvent('themeChanged', applyTheme);
           applyTheme();
+
+          // After setting up Telegram, check the user's profile status
+          if (tg.initData) {
+            checkProfileStatus(tg.initData);
+          } else {
+             // If not in Telegram, maybe show a login button or just create
+             if(fabCreate) fabCreate.style.display = 'flex';
+          }
+          
         } catch (e) {
-          console.warn('Telegram script not found or failed to initialize.');
+          console.warn('Telegram script not found or failed.');
           document.documentElement.className = 'light';
+          // Show a fallback button for local dev
+          const fabCreate = document.getElementById('fab-create');
+          if(fabCreate) fabCreate.style.display = 'flex';
         }
       }
 
-      function showFab() {
-        if (fab) {
-          fab.style.display = 'flex';
-        }
-      }
-
-      // Run both functions on page load
+      // Run the main setup function
       setupTelegramIntegration();
-      showFab();
     </script>
     <style is:global>
       .fab {
         position: fixed;
         bottom: 20px;
         right: 20px;
-        width: auto;
         height: 56px;
         border-radius: 28px;
-        /* It is now hidden by default using an inline style, which is more reliable */
-        display: none;
+        display: none; /* Both are hidden by default */
         align-items: center;
         justify-content: center;
         padding: 0 20px;
@@ -78,7 +120,6 @@ const { title } = Astro.props;
         text-decoration: none;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 1000;
-        /* Set default colors for when not in Telegram */
         background-color: #007aff;
         color: #ffffff;
       }
