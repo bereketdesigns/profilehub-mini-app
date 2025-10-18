@@ -1,16 +1,14 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import { supabase } from '../lib/supabase';
+import type { Product as Profile } from '@/lib/types'; // Using an alias for clarity
 
-// Fetch all profiles from the database on the server
 const { data: profiles, error } = await supabase
   .from('profiles')
   .select('*')
   .order('created_at', { ascending: false });
 
-if (error) {
-  console.error("Error fetching profiles:", error.message);
-}
+if (error) { console.error("Error fetching profiles:", error.message); }
 ---
 <MainLayout title="ProfileHub - User Profiles">
   <header class="page-header">
@@ -29,6 +27,14 @@ if (error) {
           />
           <h2 class="profile-username">{profile.username || 'Anonymous User'}</h2>
           <p class="profile-bio">{profile.bio || 'No bio provided.'}</p>
+          
+          <!-- !!! NEW: Conditionally render the contact link !!! -->
+          {profile.contact_link && (
+            <a href={profile.contact_link} class="contact-link" target="_blank" rel="noopener noreferrer">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path></svg>
+              <span>Contact</span>
+            </a>
+          )}
         </div>
       ))}
     </div>
@@ -45,11 +51,7 @@ if (error) {
   .page-header h1 { font-size: 2.5rem; margin: 0 0 0.5rem; }
   .page-header p { font-size: 1.1rem; color: var(--hint-color); margin: 0; }
   
-  .profile-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
+  .profile-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
   @media (min-width: 640px) { .profile-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 1024px) { .profile-grid { grid-template-columns: repeat(3, 1fr); } }
 
@@ -59,26 +61,40 @@ if (error) {
     padding: 1.5rem;
     text-align: center;
     border: 1px solid var(--border-color);
+    display: flex; /* Use flexbox for alignment */
+    flex-direction: column;
   }
   .profile-avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin: 0 auto 1rem;
-    border: 2px solid var(--bg-color);
+    width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
+    margin: 0 auto 1rem; border: 2px solid var(--bg-color);
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   }
-  .profile-username {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0 0 0.5rem;
-  }
+  .profile-username { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem; }
   .profile-bio {
-    font-size: 0.95rem;
-    color: var(--hint-color);
-    line-height: 1.5;
-    margin: 0;
+    font-size: 0.95rem; color: var(--hint-color);
+    line-height: 1.5; margin: 0;
+    flex-grow: 1; /* Makes the bio take up space to align the button */
   }
+
+  /* !!! NEW: Styles for the contact link !!! */
+  .contact-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem; /* Pushes it to the bottom */
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--tg-theme-link-color, #007aff);
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+  .contact-link:hover {
+    background-color: var(--border-color);
+  }
+
   .empty-state { text-align: center; padding: 3rem 1rem; }
 </style>

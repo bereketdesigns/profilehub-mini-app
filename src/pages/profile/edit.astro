@@ -1,6 +1,5 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
-// No external CSS import is needed.
 ---
 <MainLayout title="Edit Your Profile - ProfileHub">
   <div class="profile-page">
@@ -11,9 +10,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
       <label>Username <input type="text" name="username" id="username" required /></label>
       <label>Bio <textarea name="bio" id="bio" rows="4" required></textarea></label>
       <label>Contact Link (Optional) <input type="url" name="contact_link" id="contact_link" placeholder="https://t.me/yourusername" /></label>
-      
       <p class="image-update-notice">To update your profile picture, please create a new profile for now.</p>
-      
       <div class="form-actions">
         <a href="/" class="btn btn-secondary">Cancel</a>
         <button type="submit" id="submit-btn" class="btn btn-primary">Save Changes</button>
@@ -22,16 +19,18 @@ import MainLayout from '../../layouts/MainLayout.astro';
     </form>
   </div>
 </MainLayout>
-<script>
-  const profileForm = document.getElementById('profile-form') as HTMLFormElement | null;
-  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement | null;
-  const formStatus = document.getElementById('form-status') as HTMLDivElement | null;
-  const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement | null;
-  const usernameInput = document.getElementById('username') as HTMLInputElement | null;
-  const bioInput = document.getElementById('bio') as HTMLTextAreaElement | null;
-  const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement | null;
 
+<script>
+  // !!! BUG FIX 2: Wrap everything in DOMContentLoaded !!!
   document.addEventListener('DOMContentLoaded', () => {
+    const profileForm = document.getElementById('profile-form') as HTMLFormElement | null;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement | null;
+    const formStatus = document.getElementById('form-status') as HTMLDivElement | null;
+    const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement | null;
+    const usernameInput = document.getElementById('username') as HTMLInputElement | null;
+    const bioInput = document.getElementById('bio') as HTMLTextAreaElement | null;
+    const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement | null;
+
     if (!window.Telegram || !window.Telegram.WebApp || window.Telegram.WebApp.initData === '') {
       if(pageSubtitle) pageSubtitle.textContent = "This page can only be accessed from within Telegram.";
       return;
@@ -55,6 +54,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
 
         const data = await response.json();
         
+        // This logic is now guaranteed to work because the elements exist
         usernameInput.value = data.profile.username || '';
         bioInput.value = data.profile.bio || '';
         contactLinkInput.value = data.profile.contact_link || '';
