@@ -4,15 +4,13 @@ import MainLayout from '../../layouts/MainLayout.astro';
 <MainLayout title="Edit Your Profile - ProfileHub">
   <div class="profile-page">
     <h1>Edit Your Profile</h1>
-    <p id="page-subtitle">Loading your data...</p>
+    <p id="page-subtitle">Initializing...</p>
 
     <form id="profile-form" class="profile-form" style="display: none;">
       <label>Username <input type="text" name="username" id="username" required /></label>
       <label>Bio <textarea name="bio" id="bio" rows="4" required></textarea></label>
       <label>Contact Link (Optional) <input type="url" name="contact_link" id="contact_link" placeholder="https://t.me/yourusername" /></label>
-      
       <p class="image-update-notice">To update your profile picture, please create a new profile for now.</p>
-      
       <div class="form-actions">
         <a href="/" class="btn btn-secondary">Cancel</a>
         <button type="submit" id="submit-btn" class="btn btn-primary">Save Changes</button>
@@ -23,100 +21,104 @@ import MainLayout from '../../layouts/MainLayout.astro';
 </MainLayout>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // --- Element Selectors ---
-    const profileForm = document.getElementById('profile-form') as HTMLFormElement;
-    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
-    const formStatus = document.getElementById('form-status') as HTMLDivElement;
-    const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement;
-    const usernameInput = document.getElementById('username') as HTMLInputElement;
-    const bioInput = document.getElementById('bio') as HTMLTextAreaElement;
-    const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement;
+  // --- Element Selectors ---
+  const profileForm = document.getElementById('profile-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const formStatus = document.getElementById('form-status') as HTMLDivElement;
+  const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement;
+  const usernameInput = document.getElementById('username') as HTMLInputElement;
+  const bioInput = document.getElementById('bio') as HTMLTextAreaElement;
+  const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement;
 
-    if (!window.Telegram?.WebApp?.initData) {
-      pageSubtitle.textContent = "This page must be accessed from within Telegram.";
-      return;
-    }
-    const tg = window.Telegram.WebApp;
+  // --- Main Function to Fetch and Populate ---
+  async function fetchProfileData(tg) {
+    if (!usernameInput || !bioInput || !contactLinkInput || !profileForm || !pageSubtitle) return;
+    
+    pageSubtitle.textContent = "Loading your data...";
+    
+    try {
+      // !!! CACHE-BUSTING FIX !!! Append a timestamp to the URL to force a fresh fetch
+      const cacheBust = `?v=${Date.now()}`;
+      const response = await fetch(`/api/profiles/me${cacheBust}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData: tg.initData }),
+      });
 
-    // --- Main Function to Fetch and Populate ---
-    async function initializePage() {
-      console.log('Initializing edit page...');
-      try {
-        console.log('Fetching profile data...');
-        const response = await fetch('/api/profiles/me', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ initData: tg.initData }),
-        });
+      if (!response.ok) {
+        throw new Error('Could not fetch your profile data. Please create one first.');
+      }
+
+      const data = await response.json();
+
+      if (data && data.profile) {
+        usernameInput.value = data.profile.username || '';
+        bioInput.value = data.profile.bio || '';
+        contactLinkInput.value = data.profile.contact_link || '';
         
-        console.log('API Response Status:', response.status);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error Response:', errorText);
-          throw new Error('Could not fetch your profile data. You may need to create one first.');
-        }
-
-        const data = await response.json();
-        console.log('Received profile data:', data);
-
-        if (data && data.profile) {
-          console.log('Populating form...');
-          usernameInput.value = data.profile.username || '';
-          bioInput.value = data.profile.bio || '';
-          contactLinkInput.value = data.profile.contact_link || '';
-          
-          profileForm.style.display = 'flex';
-          pageSubtitle.textContent = 'Update your public information.';
-          console.log('Form populated successfully.');
-        } else {
-          throw new Error('Received invalid data structure from API.');
-        }
-      } catch (err) {
-        const error = err as Error;
-        console.error('Error in initializePage:', error.message);
-        pageSubtitle.textContent = `Error: ${error.message}`;
+        profileForm.style.display = 'flex';
+        pageSubtitle.textContent = 'Update your public information.';
+      } else {
+        throw new Error('Received invalid data from the server.');
       }
+    } catch (err) {
+      const error = err as Error;
+      pageSubtitle.textContent = `Error: ${error.message}`;
     }
+  }
 
-    initializePage();
+  // --- Main Function to Handle Form Submission ---
+  async function handleFormSubmit(e, tg) {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    formStatus.textContent = 'Saving changes...';
 
-    // --- Form Submission Logic ---
-    profileForm?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      submitBtn.disabled = true;
-      formStatus.textContent = 'Saving changes...';
+    const formData = new FormData(profileForm);
+    const updatedData = {
+      username: formData.get('username'),
+      bio: formData.get('bio'),
+      contact_link: formData.get('contact_link'),
+      initData: tg.initData,
+    };
 
-      const formData = new FormData(profileForm);
-      const updatedData = {
-        username: formData.get('username'),
-        bio: formData.get('bio'),
-        contact_link: formData.get('contact_link'),
-        initData: tg.initData,
-      };
-
-      try {
-        const response = await fetch('/api/profiles/update', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedData),
-        });
-
-        if (!response.ok) {
-          const result = await response.json();
-          throw new Error(result.error || 'Failed to save changes.');
-        }
-
-        alert('Profile updated successfully!');
-        tg.close();
-      } catch (err) {
-        const error = err as Error;
-        alert(`Failed to save changes: ${error.message}`);
-        submitBtn.disabled = false;
-        formStatus.textContent = 'Failed. Please try again.';
+    try {
+      const response = await fetch('/api/profiles/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to save changes.');
       }
-    });
-  });
+      alert('Profile updated successfully!');
+      tg.close();
+    } catch (err) {
+      const error = err as Error;
+      alert(`Failed to save changes: ${error.message}`);
+      submitBtn.disabled = false;
+      formStatus.textContent = 'Failed. Please try again.';
+    }
+  }
+  
+  // --- RELIABLE INITIALIZATION LOGIC ---
+  function initializeApp() {
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+      // The Telegram object is ready!
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      
+      fetchProfileData(tg);
+      profileForm?.addEventListener('submit', (e) => handleFormSubmit(e, tg));
+    } else {
+      // The Telegram object is not ready yet.
+      // We will check again in a moment.
+      setTimeout(initializeApp, 50); // Poll every 50ms
+    }
+  }
+
+  // Start the initialization process.
+  initializeApp();
 </script>
 <style>
   /* Styles are unchanged */
