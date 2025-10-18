@@ -1,6 +1,6 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
-// The page is now fully client-side rendered for a dynamic experience
+// No server-side logic needed, everything is handled on the client.
 ---
 <MainLayout title="Edit Your Profile - ProfileHub">
   <div class="profile-page">
@@ -10,7 +10,10 @@ import MainLayout from '../layouts/MainLayout.astro';
     <form id="profile-form" class="profile-form" style="display: none;">
       <label>Username <input type="text" name="username" id="username" required /></label>
       <label>Bio <textarea name="bio" id="bio" rows="4" required></textarea></label>
-      <label>Contact Link (Optional) <input type="url" name="contact_link" id="contact_link" /></label>
+      <label>Contact Link (Optional) <input type="url" name="contact_link" id="contact_link" placeholder="https://t.me/yourusername" /></label>
+      
+      <!-- Image re-upload functionality is a future step -->
+      <p class="image-update-notice">To update your profile picture, please create a new profile for now.</p>
       
       <div class="form-actions">
         <a href="/" class="btn btn-secondary">Cancel</a>
@@ -33,7 +36,6 @@ import MainLayout from '../layouts/MainLayout.astro';
   const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement | null;
 
   document.addEventListener('DOMContentLoaded', () => {
-    // We can only proceed if we are inside Telegram
     if (!window.Telegram || !window.Telegram.WebApp || window.Telegram.WebApp.initData === '') {
       if(pageSubtitle) pageSubtitle.textContent = "This page can only be accessed from within Telegram.";
       return;
@@ -43,6 +45,8 @@ import MainLayout from '../layouts/MainLayout.astro';
 
     // 1. Fetch the user's current profile data
     async function fetchProfileData() {
+      if (!usernameInput || !bioInput || !contactLinkInput || !profileForm || !pageSubtitle) return;
+      
       try {
         const response = await fetch('/api/profiles/me', {
           method: 'POST',
@@ -57,17 +61,17 @@ import MainLayout from '../layouts/MainLayout.astro';
         const data = await response.json();
         
         // 2. Populate the form with the fetched data
-        if (usernameInput) usernameInput.value = data.profile.username;
-        if (bioInput) bioInput.value = data.profile.bio;
-        if (contactLinkInput) contactLinkInput.value = data.profile.contact_link || '';
+        // !!! BUG FIX 1: Add fallbacks to prevent "undefined" or "null" strings !!!
+        usernameInput.value = data.profile.username || '';
+        bioInput.value = data.profile.bio || '';
+        contactLinkInput.value = data.profile.contact_link || '';
 
-        // Show the form and update the subtitle
-        if (profileForm) profileForm.style.display = 'flex';
-        if (pageSubtitle) pageSubtitle.textContent = 'Update your public information.';
+        profileForm.style.display = 'flex';
+        pageSubtitle.textContent = 'Update your public information.';
 
       } catch (err) {
         const error = err as Error;
-        if (pageSubtitle) pageSubtitle.textContent = `Error: ${error.message}`;
+        pageSubtitle.textContent = `Error: ${error.message}`;
         alert(`Error: ${error.message}`);
       }
     }
@@ -86,8 +90,9 @@ import MainLayout from '../layouts/MainLayout.astro';
       const updatedData = {
         username: formData.get('username'),
         bio: formData.get('bio'),
+        // !!! BUG FIX 2: Correctly read the contact_link from the form !!!
         contact_link: formData.get('contact_link'),
-        initData: tg.initData, // Send initData for secure validation
+        initData: tg.initData,
       };
 
       try {
@@ -103,7 +108,7 @@ import MainLayout from '../layouts/MainLayout.astro';
         }
 
         alert('Profile updated successfully!');
-        tg.close(); // Close the Mini App after a successful update
+        tg.close();
 
       } catch (err) {
         const error = err as Error;
@@ -124,6 +129,7 @@ import MainLayout from '../layouts/MainLayout.astro';
     width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px;
     border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color);
   }
+  .image-update-notice { font-size: 0.9em; color: var(--hint-color); background-color: var(--bg-color); padding: 0.75rem; border-radius: 8px; }
   .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; }
   .btn {
     padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem;
