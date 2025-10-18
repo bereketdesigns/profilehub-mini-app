@@ -24,51 +24,66 @@ import MainLayout from '../../layouts/MainLayout.astro';
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // Selectors are unchanged
-    const profileForm = document.getElementById('profile-form') as HTMLFormElement | null;
-    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement | null;
-    const formStatus = document.getElementById('form-status') as HTMLDivElement | null;
-    const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement | null;
-    const usernameInput = document.getElementById('username') as HTMLInputElement | null;
-    const bioInput = document.getElementById('bio') as HTMLTextAreaElement | null;
-    const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement | null;
+    // --- Element Selectors ---
+    const profileForm = document.getElementById('profile-form') as HTMLFormElement;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const formStatus = document.getElementById('form-status') as HTMLDivElement;
+    const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement;
+    const usernameInput = document.getElementById('username') as HTMLInputElement;
+    const bioInput = document.getElementById('bio') as HTMLTextAreaElement;
+    const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement;
 
-    if (!window.Telegram || !window.Telegram.WebApp || window.Telegram.WebApp.initData === '') {
-      if(pageSubtitle) pageSubtitle.textContent = "This page can only be accessed from within Telegram.";
+    if (!window.Telegram?.WebApp?.initData) {
+      pageSubtitle.textContent = "This page must be accessed from within Telegram.";
       return;
     }
     const tg = window.Telegram.WebApp;
 
-    async function fetchProfileData() {
-      if (!usernameInput || !bioInput || !contactLinkInput || !profileForm || !pageSubtitle) return;
-      
+    // --- Main Function to Fetch and Populate ---
+    async function initializePage() {
+      console.log('Initializing edit page...');
       try {
+        console.log('Fetching profile data...');
         const response = await fetch('/api/profiles/me', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ initData: tg.initData }),
         });
-        if (!response.ok) {
-          throw new Error('Could not fetch your profile. You may need to create one first.');
-        }
-        const data = await response.json();
         
-        // This is the correct logic for pre-filling
-        usernameInput.value = data.profile.username || '';
-        bioInput.value = data.profile.bio || '';
-        contactLinkInput.value = data.profile.contact_link || '';
-        profileForm.style.display = 'flex';
-        pageSubtitle.textContent = 'Update your public information.';
+        console.log('API Response Status:', response.status);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText);
+          throw new Error('Could not fetch your profile data. You may need to create one first.');
+        }
+
+        const data = await response.json();
+        console.log('Received profile data:', data);
+
+        if (data && data.profile) {
+          console.log('Populating form...');
+          usernameInput.value = data.profile.username || '';
+          bioInput.value = data.profile.bio || '';
+          contactLinkInput.value = data.profile.contact_link || '';
+          
+          profileForm.style.display = 'flex';
+          pageSubtitle.textContent = 'Update your public information.';
+          console.log('Form populated successfully.');
+        } else {
+          throw new Error('Received invalid data structure from API.');
+        }
       } catch (err) {
         const error = err as Error;
+        console.error('Error in initializePage:', error.message);
         pageSubtitle.textContent = `Error: ${error.message}`;
       }
     }
-    fetchProfileData();
 
+    initializePage();
+
+    // --- Form Submission Logic ---
     profileForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!submitBtn || !formStatus) return;
-
       submitBtn.disabled = true;
       formStatus.textContent = 'Saving changes...';
 
@@ -92,10 +107,8 @@ import MainLayout from '../../layouts/MainLayout.astro';
           throw new Error(result.error || 'Failed to save changes.');
         }
 
-        // The API now just returns a success message, which is all we need.
         alert('Profile updated successfully!');
         tg.close();
-
       } catch (err) {
         const error = err as Error;
         alert(`Failed to save changes: ${error.message}`);
@@ -112,16 +125,10 @@ import MainLayout from '../../layouts/MainLayout.astro';
   #page-subtitle { color: var(--hint-color); }
   .profile-form { display: flex; flex-direction: column; gap: 1rem; background-color: var(--secondary-bg-color); padding: 1.5rem; border-radius: 16px; margin-top: 2rem; }
   .profile-form label { font-weight: 500; display: flex; flex-direction: column; gap: 0.25rem; }
-  .profile-form input, .profile-form textarea {
-    width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px;
-    border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color);
-  }
+  .profile-form input, .profile-form textarea { width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color); }
   .image-update-notice { font-size: 0.9em; color: var(--hint-color); background-color: var(--bg-color); padding: 0.75rem; border-radius: 8px; }
   .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; }
-  .btn {
-    padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem;
-    font-weight: 600; cursor: pointer; text-decoration: none;
-  }
+  .btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; }
   .btn-primary { background-color: var(--tg-theme-button-color, #007aff); color: var(--tg-theme-button-text-color, #fff); }
   .btn-secondary { background-color: var(--secondary-bg-color); color: var(--tg-theme-text-color, #000); border: 1px solid var(--border-color); }
   #form-status { font-size: 0.9rem; color: var(--hint-color); text-align: center; margin-top: 0.5rem; min-height: 1.2em; }
