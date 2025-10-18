@@ -25,8 +25,8 @@ export const POST: APIRoute = async ({ request }) => {
         bio, 
         contact_link
       })
-      .eq('telegram_id', user.id)
-      .select(); // <-- REMOVED .single() FROM HERE
+      .eq('telegram_id', user.id) // This is the security check
+      .select(); // Returns an array of updated items
 
     if (error) {
       throw new Error(`Database update error: ${error.message}`);
@@ -40,6 +40,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify(data[0]), { status: 200 });
   } catch (err) {
     const error = err as Error;
+    console.error('Update API Error:', error.message);
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 };

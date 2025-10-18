@@ -1,6 +1,6 @@
 ---
-import MainLayout from '../layouts/MainLayout.astro';
-// No server-side logic needed, everything is handled on the client.
+import MainLayout from '../../layouts/MainLayout.astro';
+// No external CSS import is needed.
 ---
 <MainLayout title="Edit Your Profile - ProfileHub">
   <div class="profile-page">
@@ -12,7 +12,6 @@ import MainLayout from '../layouts/MainLayout.astro';
       <label>Bio <textarea name="bio" id="bio" rows="4" required></textarea></label>
       <label>Contact Link (Optional) <input type="url" name="contact_link" id="contact_link" placeholder="https://t.me/yourusername" /></label>
       
-      <!-- Image re-upload functionality is a future step -->
       <p class="image-update-notice">To update your profile picture, please create a new profile for now.</p>
       
       <div class="form-actions">
@@ -23,14 +22,11 @@ import MainLayout from '../layouts/MainLayout.astro';
     </form>
   </div>
 </MainLayout>
-
 <script>
   const profileForm = document.getElementById('profile-form') as HTMLFormElement | null;
   const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement | null;
   const formStatus = document.getElementById('form-status') as HTMLDivElement | null;
   const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement | null;
-
-  // Form input elements
   const usernameInput = document.getElementById('username') as HTMLInputElement | null;
   const bioInput = document.getElementById('bio') as HTMLTextAreaElement | null;
   const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement | null;
@@ -43,7 +39,6 @@ import MainLayout from '../layouts/MainLayout.astro';
 
     const tg = window.Telegram.WebApp;
 
-    // 1. Fetch the user's current profile data
     async function fetchProfileData() {
       if (!usernameInput || !bioInput || !contactLinkInput || !profileForm || !pageSubtitle) return;
       
@@ -60,8 +55,6 @@ import MainLayout from '../layouts/MainLayout.astro';
 
         const data = await response.json();
         
-        // 2. Populate the form with the fetched data
-        // !!! BUG FIX 1: Add fallbacks to prevent "undefined" or "null" strings !!!
         usernameInput.value = data.profile.username || '';
         bioInput.value = data.profile.bio || '';
         contactLinkInput.value = data.profile.contact_link || '';
@@ -78,7 +71,6 @@ import MainLayout from '../layouts/MainLayout.astro';
 
     fetchProfileData();
 
-    // 3. Handle form submission to update the profile
     profileForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!submitBtn || !formStatus) return;
@@ -90,7 +82,6 @@ import MainLayout from '../layouts/MainLayout.astro';
       const updatedData = {
         username: formData.get('username'),
         bio: formData.get('bio'),
-        // !!! BUG FIX 2: Correctly read the contact_link from the form !!!
         contact_link: formData.get('contact_link'),
         initData: tg.initData,
       };
