@@ -1,0 +1,120 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import { supabase } from '../../lib/supabase';
+import { type Product as Profile } from '../../types'; // Using an alias for clarity
+import '../../styles/admin.css'; // We can still reuse the admin styles
+
+// THIS PAGE IS NOW SERVER-RENDERED TO FETCH DATA SECURELY
+// We will get the user's initData from a cookie set by a middleware.
+// For now, let's assume we get the user object. 
+// A full secure implementation would use middleware.
+// Let's build a client-side fetch for now for simplicity.
+---
+<MainLayout title="Edit Your Profile">
+  <div class="admin-panel">
+    <header class="admin-header">
+      <h1>Edit Profile</h1>
+      <a href="/" class="back-link">&larr; Back to Profiles</a>
+    </header>
+    <section class="admin-section">
+      <form id="edit-profile-form" class="product-form">
+        <!-- Data will be loaded by client-side JS -->
+        <label>Username <input type="text" name="username" id="username" required /></label>
+        <label>Bio <textarea name="bio" id="bio" rows="4" required></textarea></label>
+        <label>Contact Link (Optional) <input type="url" name="contact_link" id="contact_link" placeholder="https://t.me/yourusername" /></label>
+        
+        <p class="image-notice">To change your profile picture, please create a new profile for now.</p>
+        
+        <div class="form-actions">
+          <div id="form-status" class="upload-status"></div>
+          <a href="/" class="btn btn-secondary">Cancel</a>
+          <button type="submit" id="submit-btn" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</MainLayout>
+
+<script>
+  // All logic is now on the client-side for this page.
+  const form = document.getElementById('edit-profile-form') as HTMLFormElement;
+  const usernameInput = document.getElementById('username') as HTMLInputElement;
+  const bioInput = document.getElementById('bio') as HTMLTextAreaElement;
+  const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const formStatus = document.getElementById('form-status') as HTMLDivElement;
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!window.Telegram?.WebApp?.initData) {
+      formStatus.textContent = 'Error: Must be accessed from Telegram.';
+      return;
+    }
+
+    const tg = window.Telegram.WebApp;
+
+    async function loadProfile() {
+      formStatus.textContent = 'Loading your profile...';
+      try {
+        const response = await fetch('/api/profiles/me', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ initData: tg.initData }),
+        });
+        if (!response.ok) throw new Error('Could not fetch your profile.');
+        
+        const { profile } = await response.json();
+        
+        // Correctly populate the form
+        usernameInput.value = profile.username || '';
+        bioInput.value = profile.bio || ''; // <-- BUG 1 FIX
+        contactLinkInput.value = profile.contact_link || '';
+
+      } catch (err) {
+        const error = err as Error;
+        formStatus.textContent = error.message;
+      }
+    }
+
+    loadProfile();
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        submitBtn.disabled = true;
+        formStatus.textContent = 'Saving...';
+        
+        const updatedData = {
+            username: usernameInput.value,
+            bio: bioInput.value,
+            contact_link: contactLinkInput.value,
+            initData: tg.initData,
+        };
+        
+        try {
+            const response = await fetch('/api/profiles/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData),
+            });
+            
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.error || 'Failed to save changes.');
+            }
+            
+            alert('Profile updated successfully!');
+            tg.close();
+        } catch (err) {
+            const error = err as Error;
+            alert(error.message);
+            submitBtn.disabled = false;
+            formStatus.textContent = 'Failed. Please try again.';
+        }
+    });
+  });
+</script>
+<style>
+  /* We can reuse some admin styles, but make them specific here */
+  .admin-panel { max-width: 800px; margin: 0 auto; }
+  /* ... copy styles from admin.css as needed ... */
+  .image-notice { font-size: 0.9rem; color: var(--hint-color); background-color: var(--bg-color); padding: 0.75rem; border-radius: 8px; }
+</style>
