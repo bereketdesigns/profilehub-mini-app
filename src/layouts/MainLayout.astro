@@ -11,7 +11,7 @@ const { title } = Astro.props;
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="description" content="ProfileHub Mini App" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta name="viewport" content="width=device-width, initial-scale-1.0, viewport-fit=cover" />
 		<title>{title}</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 	</head>
@@ -20,32 +20,44 @@ const { title } = Astro.props;
       <slot /> 
     </main>
     
-    <!-- New Floating "My Profile" Button -->
+    <!-- Floating "My Profile" Button -->
     <a href="/me" class="fab" id="profile-fab">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      <svg xmlns="http://www.w.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
       <span>My Profile</span>
     </a>
 
     <script is:inline>
-      try {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        
-        // Show the FAB and color it with the theme button color
-        const fab = document.getElementById('profile-fab');
+      const fab = document.getElementById('profile-fab');
+
+      function setupTelegramIntegration() {
+        try {
+          const tg = window.Telegram.WebApp;
+          tg.ready();
+          
+          // Color the FAB with the theme button color from Telegram
+          if (fab) {
+            fab.style.backgroundColor = tg.themeParams.button_color || '#007aff';
+            fab.style.color = tg.themeParams.button_text_color || '#ffffff';
+          }
+          
+          const applyTheme = () => { document.documentElement.className = tg.colorScheme; };
+          tg.onEvent('themeChanged', applyTheme);
+          applyTheme();
+        } catch (e) {
+          console.warn('Telegram script not found or failed to initialize.');
+          document.documentElement.className = 'light';
+        }
+      }
+
+      function showFab() {
         if (fab) {
           fab.style.display = 'flex';
-          fab.style.backgroundColor = tg.themeParams.button_color || '#007aff';
-          fab.style.color = tg.themeParams.button_text_color || '#ffffff';
         }
-        
-        const applyTheme = () => { document.documentElement.className = tg.colorScheme; };
-        tg.onEvent('themeChanged', applyTheme);
-        applyTheme();
-      } catch (e) {
-        console.warn('Telegram script not found.');
-        document.documentElement.className = 'light';
       }
+
+      // Run both functions on page load
+      setupTelegramIntegration();
+      showFab();
     </script>
     <style is:global>
       .fab {
@@ -55,7 +67,8 @@ const { title } = Astro.props;
         width: auto;
         height: 56px;
         border-radius: 28px;
-        display: none; /* Hidden by default, shown by script */
+        /* It is now hidden by default using an inline style, which is more reliable */
+        display: none;
         align-items: center;
         justify-content: center;
         padding: 0 20px;
@@ -65,6 +78,9 @@ const { title } = Astro.props;
         text-decoration: none;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 1000;
+        /* Set default colors for when not in Telegram */
+        background-color: #007aff;
+        color: #ffffff;
       }
     </style>
 	</body>
