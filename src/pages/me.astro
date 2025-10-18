@@ -1,0 +1,39 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+---
+<MainLayout title="My Profile - ProfileHub">
+  <div class="profile-page">
+    <h1>Create Your Profile</h1>
+    <p>Share your profile with the community.</p>
+
+    <form id="profile-form" class="profile-form">
+      <label>Username <input type="text" name="username" required /></label>
+      <label>Bio <textarea name="bio" rows="4" required></textarea></label>
+      <label>Contact Link (Optional) <input type="url" name="contact_link" placeholder="https://t.me/yourusername" /></label>
+      <label>Profile Picture <input type="file" id="avatar-upload" accept="image/*" required /></label>
+      
+      <button type="submit" id="submit-btn">Create Profile</button>
+      <div id="form-status"></div>
+    </form>
+  </div>
+</MainLayout>
+<script>
+  // We will add the JavaScript to handle this form in the next stage
+</script>
+<style>
+  .profile-page { max-width: 600px; margin: 0 auto; }
+  .profile-page h1 { font-size: 2rem; }
+  
+  .profile-form { display: flex; flex-direction: column; gap: 1rem; background-color: var(--secondary-bg-color); padding: 1.5rem; border-radius: 16px; margin-top: 2rem; }
+  .profile-form label { font-weight: 500; display: flex; flex-direction: column; gap: 0.25rem; }
+  .profile-form input, .profile-form textarea {
+    width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px;
+    border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color);
+  }
+  .profile-form button {
+    background-color: var(--tg-theme-button-color, #007aff); color: var(--tg-theme-button-text-color, #fff);
+    padding: 0.8rem; border: none; border-radius: 8px; font-size: 1.1rem;
+    font-weight: 600; cursor: pointer; margin-top: 1rem;
+  }
+  #form-status { font-size: 0.9rem; color: var(--hint-color); text-align: center; margin-top: 0.5rem; }
+</style>
