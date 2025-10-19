@@ -3,18 +3,28 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
-// Define the type for our headers object to solve the implicit 'any' error.
-const headers: { [key: string]: string } = {};
+// Create the base client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Check if running in a browser context and if the Telegram script has loaded.
-if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) {
-  // If so, add the initData to a custom header for every request.
-  headers['X-Telegram-Init-Data'] = window.Telegram.WebApp.initData;
+// --- New Authentication Logic ---
+// This function logs the user in and gets a JWT
+export async function loginWithTelegram() {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData: window.Telegram.WebApp.initData }),
+      });
+      if (!response.ok) throw new Error('Login failed');
+      const { accessToken } = await response.json();
+
+      // Set the session for the Supabase client
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: '' });
+      console.log('Successfully logged in with Telegram and set Supabase session.');
+
+    } catch (error) {
+      console.error('Telegram login process failed:', error);
+    }
+  }
 }
-
-// Create the Supabase client with the (potentially empty) custom headers object.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  global: {
-    headers,
-  },
-});

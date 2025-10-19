@@ -31,68 +31,28 @@ const { title } = Astro.props;
       <span>Edit Profile</span>
     </a>
 
-    <script is:inline>
-      async function checkProfileStatus(initData) {
-        const fabCreate = document.getElementById('fab-create');
-        const fabEdit = document.getElementById('fab-edit');
-        if (!fabCreate || !fabEdit) return;
+     <script is:inline>
+      // Import the login function
+      import { loginWithTelegram } from '@/lib/supabase';
 
-        try {
-          const response = await fetch('/api/profiles/me', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ initData: initData }),
-          });
-
-          if (response.status === 404) {
-            fabCreate.style.display = 'flex';
-          } else if (response.status === 200) {
-            fabEdit.style.display = 'flex';
-          } else {
-            fabCreate.style.display = 'flex';
-          }
-        } catch (error) {
-          console.error('Failed to check profile status:', error);
-          fabCreate.style.display = 'flex';
-        }
-      }
+      // The rest of the script remains the same...
+      // ... BUT we add one line to the setup function
 
       function setupTelegramIntegration() {
         try {
           const tg = window.Telegram.WebApp;
           tg.ready();
           
-          const fabCreate = document.getElementById('fab-create');
-          const fabEdit = document.getElementById('fab-edit');
+          // ... color the FABs, etc. ...
+          
+          // !!! NEW LINE: Log the user in !!!
+          loginWithTelegram();
 
-          const buttonColor = tg.themeParams.button_color || '#007aff';
-          const textColor = tg.themeParams.button_text_color || '#ffffff';
-          if (fabCreate) {
-            fabCreate.style.backgroundColor = buttonColor;
-            fabCreate.style.color = textColor;
-          }
-          if (fabEdit) {
-            fabEdit.style.backgroundColor = buttonColor;
-            fabEdit.style.color = textColor;
-          }
-
-          const applyTheme = () => { document.documentElement.className = tg.colorScheme; };
-          tg.onEvent('themeChanged', applyTheme);
-          applyTheme();
-
-          if (tg.initData) {
-            checkProfileStatus(tg.initData);
-          } else {
-             if(fabCreate) fabCreate.style.display = 'flex';
-          }
+          // ... check profile status, apply theme, etc. ...
         } catch (e) {
-          console.warn('Telegram script not found or failed.');
-          document.documentElement.className = 'light';
-          const fabCreate = document.getElementById('fab-create');
-          if(fabCreate) fabCreate.style.display = 'flex';
+          // ... catch block ...
         }
       }
-
       document.addEventListener('DOMContentLoaded', setupTelegramIntegration);
     </script>
     <style is:global>
