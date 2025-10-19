@@ -1,8 +1,6 @@
-/* --- The New "Deep Indigo & Emerald" Color Palette --- */
-
 :root {
-  /* Light Mode Colors */
-  --bg-color: #F9FAFB;
+  /* !!! UPDATED: Light Mode Colors !!! */
+  --bg-color: #FFFFF0; /* Ivory White */
   --secondary-bg-color: #FFFFFF;
   --border-color: #E5E7EB;
   --text-color: #1F2937;
@@ -13,36 +11,30 @@
 }
 
 html.dark {
-  /* Dark Mode Colors */
+  /* Dark Mode Colors (Unchanged) */
   --bg-color: #111827;
   --secondary-bg-color: #1F2937;
   --border-color: #374151;
   --text-color: #E5E7EB;
   --hint-color: #9CA3AF;
 
-  --brand-color: #10B981; /* Emerald Green remains vibrant */
+  --brand-color: #10B981;
   --brand-text-color: #FFFFFF;
 }
 
-/* --- Base Global Styles --- */
-
-*, *::before, *::after { 
-  box-sizing: border-box; 
-}
-
+/* Base Global Styles (Unchanged) */
+*, *::before, *::after { box-sizing: border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
   background-color: var(--bg-color);
   color: var(--text-color);
 }
-
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem 1rem;
 }
-
 a { 
   color: var(--brand-color);
   text-decoration: none; 
