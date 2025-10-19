@@ -20,105 +20,93 @@ import MainLayout from '../../layouts/MainLayout.astro';
 </MainLayout>
 
 <script>
-  const profileForm = document.getElementById('edit-profile-form') as HTMLFormElement;
-  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
-  const formStatus = document.getElementById('form-status') as HTMLDivElement;
-  const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement;
-  const usernameInput = document.getElementById('username') as HTMLInputElement;
-  const bioInput = document.getElementById('bio') as HTMLTextAreaElement;
-  const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement;
-  const mainImageUpload = document.getElementById('main-image-upload') as HTMLInputElement;
-  const mainImageUrlInput = document.getElementById('main-image-url') as HTMLInputElement;
-  const galleryImagesUrlInput = document.getElementById('gallery-images-url') as HTMLInputElement;
-  const imagePreview = document.getElementById('image-preview') as HTMLImageElement;
+  // This ensures the script runs only after the entire page is loaded and ready.
+  document.addEventListener('DOMContentLoaded', () => {
+    const profileForm = document.getElementById('profile-form') as HTMLFormElement | null;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement | null;
+    const formStatus = document.getElementById('form-status') as HTMLDivElement | null;
+    const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement | null;
+    const usernameInput = document.getElementById('username') as HTMLInputElement | null;
+    const bioInput = document.getElementById('bio') as HTMLTextAreaElement | null;
+    const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement | null;
 
-  function initializeApp() {
-    if (!window.Telegram?.WebApp?.initData) {
-      setTimeout(initializeApp, 50);
+    if (!window.Telegram || !window.Telegram.WebApp || window.Telegram.WebApp.initData === '') {
+      if(pageSubtitle) pageSubtitle.textContent = "This page can only be accessed from within Telegram.";
       return;
     }
+
     const tg = window.Telegram.WebApp;
-    tg.ready();
-    fetchProfileData(tg);
-    profileForm.addEventListener('submit', (e) => handleFormSubmit(e, tg));
-  }
 
-  async function fetchProfileData(tg) {
-    pageSubtitle.textContent = "Loading your data...";
-    try {
-      const response = await fetch(`/api/profiles/me`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: tg.initData }),
-      });
-      if (!response.ok) throw new Error('Could not fetch your profile data.');
-      const data = await response.json();
-      if (!data?.profile) throw new Error('Received invalid data from server.');
-
-      usernameInput.value = data.profile.username || '';
-      bioInput.value = data.profile.bio || '';
-      contactLinkInput.value = data.profile.contact_link || '';
-      mainImageUrlInput.value = data.profile.profile_picture_url || '';
-      galleryImagesUrlInput.value = JSON.stringify([data.profile.profile_picture_url || '']);
-      imagePreview.src = data.profile.profile_picture_url || '/default-avatar.png';
+    async function fetchProfileData() {
+      if (!usernameInput || !bioInput || !contactLinkInput || !profileForm || !pageSubtitle) return;
       
-      profileForm.style.display = 'flex';
-      pageSubtitle.textContent = 'Update your public information.';
-    } catch (err) {
-      const error = err as Error;
-      pageSubtitle.textContent = `Error: ${error.message}`;
-    }
-  }
+      try {
+        const response = await fetch('/api/profiles/me', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ initData: tg.initData }),
+        });
 
-  async function handleFormSubmit(e, tg) {
-    e.preventDefault();
-    submitBtn.disabled = true;
-    formStatus.textContent = 'Processing...';
-    const newImageFile = mainImageUpload.files?.[0];
-    try {
-      if (newImageFile) {
-        formStatus.textContent = 'Uploading new image...';
-        const uploadedImageUrl = await uploadFile(newImageFile);
-        mainImageUrlInput.value = uploadedImageUrl;
-        galleryImagesUrlInput.value = JSON.stringify([uploadedImageUrl]);
+        if (!response.ok) {
+          throw new Error('Could not fetch your profile. You may need to create one first.');
+        }
+
+        const data = await response.json();
+        
+        usernameInput.value = data.profile.username || '';
+        bioInput.value = data.profile.bio || '';
+        contactLinkInput.value = data.profile.contact_link || '';
+
+        profileForm.style.display = 'flex';
+        pageSubtitle.textContent = 'Update your public information.';
+
+      } catch (err) {
+        const error = err as Error;
+        pageSubtitle.textContent = `Error: ${error.message}`;
+        alert(`Error: ${error.message}`);
       }
-      formStatus.textContent = 'Saving product data...';
+    }
+
+    fetchProfileData();
+
+    profileForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!submitBtn || !formStatus) return;
+
+      submitBtn.disabled = true;
+      formStatus.textContent = 'Saving changes...';
+
       const formData = new FormData(profileForm);
       const updatedData = {
         username: formData.get('username'),
         bio: formData.get('bio'),
         contact_link: formData.get('contact_link'),
-        profile_picture_url: mainImageUrlInput.value, 
         initData: tg.initData,
       };
-      const response = await fetch('/api/profiles/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData),
-      });
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || 'Failed to save changes.');
-      }
-      alert('Profile updated successfully!');
-      tg.close();
-    } catch (err) {
-      const error = err as Error;
-      alert(`Failed to save changes: ${error.message}`);
-      submitBtn.disabled = false;
-      formStatus.textContent = 'Failed. Please try again.';
-    }
-  }
 
-  async function uploadFile(file: File): Promise<string> {
-    const response = await fetch('/api/profiles/upload', {
-      method: 'POST', body: file, headers: { 'Content-Type': file.type }
+      try {
+        const response = await fetch('/api/profiles/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedData),
+        });
+
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.error);
+        }
+
+        alert('Profile updated successfully!');
+        tg.close();
+
+      } catch (err) {
+        const error = err as Error;
+        alert(`Failed to save changes: ${error.message}`);
+        submitBtn.disabled = false;
+        formStatus.textContent = 'Failed. Please try again.';
+      }
     });
-    if (!response.ok) throw new Error('Upload failed.');
-    return (await response.json()).url;
-  }
-  
-  initializeApp();
+  });
 </script>
 <style>
   .profile-page { max-width: 600px; margin: 0 auto; }
@@ -137,8 +125,8 @@ import MainLayout from '../../layouts/MainLayout.astro';
     font-weight: 600; cursor: pointer; text-decoration: none;
   }
   .btn-primary { 
-    background-color: var(--brand-color); /* Uses our brand color */
-    color: var(--brand-text-color); /* Uses our brand text color */
+    background-color: var(--brand-color);
+    color: var(--brand-text-color);
   }
   .btn-secondary { background-color: var(--secondary-bg-color); color: var(--text-color); border: 1px solid var(--border-color); }
   #form-status { font-size: 0.9rem; color: var(--hint-color); text-align: center; margin-top: 0.5rem; min-height: 1.2em; }
