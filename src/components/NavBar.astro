@@ -1,104 +1,138 @@
 ---
-// This component has no server-side logic, it's all HTML and client-side JS.
+// Get the Admin ID from the environment variables to pass to the client script
+const ADMIN_ID = import.meta.env.ADMIN_TELEGRAM_ID; 
+// Note: We'll repurpose this logic for showing the correct profile button.
 ---
 <header>
   <nav class="container">
     <a href="/" class="brand-logo-link" aria-label="DivineX Homepage">
-      <!-- Both logos are included here -->
+      <!-- !!! FIX: The actual image tags for the logos are now here !!! -->
       <img src="/logo-light.png" alt="DivineX Logo" class="brand-logo-img logo-light" />
       <img src="/logo-dark.png" alt="DivineX Logo" class="brand-logo-img logo-dark" />
     </a>
     
-    <!-- This is the theme toggle button -->
-    <button id="theme-toggle" title="Toggle theme">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-moon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-    </button>
+    <div class="nav-actions">
+      <!-- !!! FIX: The conditional profile buttons are now here !!! -->
+      <a href="/me" class="nav-button create-profile" id="nav-create-profile" style="display: none;">
+        Create Profile
+      </a>
+      <a href="/profile/edit" class="nav-button edit-profile" id="nav-edit-profile" style="display: none;">
+        Edit Profile
+      </a>
+      
+      <!-- The theme toggle button -->
+      <button id="theme-toggle" title="Toggle theme">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-moon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+    </div>
   </nav>
 </header>
 
 <script>
+  // This is a self-contained script that handles all NavBar interactivity.
   document.addEventListener('DOMContentLoaded', () => {
+    // --- Theme Toggle Logic ---
     const themeToggle = document.getElementById('theme-toggle');
-    if (!themeToggle) return;
+    if (themeToggle) {
+      const applyTheme = (theme) => {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+      };
 
-    const applyTheme = (theme) => {
-      document.documentElement.classList.toggle('dark', theme === 'dark');
-    };
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        applyTheme(savedTheme);
+      }
 
-    // On page load, check for a user's saved preference
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      applyTheme(savedTheme);
+      themeToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        const newTheme = isDark ? 'light' : 'dark';
+        applyTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+      });
     }
 
-    // Handle button click to toggle and save the preference
-    themeToggle.addEventListener('click', () => {
-      const isDark = document.documentElement.classList.contains('dark');
-      const newTheme = isDark ? 'light' : 'dark';
-      applyTheme(newTheme);
-      localStorage.setItem('theme', newTheme);
-    });
+    // --- Conditional Profile Button Logic ---
+    const navCreateBtn = document.getElementById('nav-create-profile');
+    const navEditBtn = document.getElementById('nav-edit-profile');
+
+    async function checkProfileStatus(initData) {
+      if (!navCreateBtn || !navEditBtn) return;
+      try {
+        const response = await fetch('/api/profiles/me', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ initData: initData }),
+        });
+
+        if (response.status === 404) {
+          navCreateBtn.style.display = 'block'; // Show "Create"
+        } else if (response.status === 200) {
+          navEditBtn.style.display = 'block'; // Show "Edit"
+        } else {
+          navCreateBtn.style.display = 'block'; // Fallback
+        }
+      } catch (error) {
+        console.error('Failed to check profile status:', error);
+        navCreateBtn.style.display = 'block'; // Fallback
+      }
+    }
+
+    // Try to get Telegram data and show the correct button
+    if (window.Telegram?.WebApp?.initData) {
+      checkProfileStatus(window.Telegram.WebApp.initData);
+    } else {
+      // Fallback for when not in Telegram (e.g., local dev)
+      // We can't know the user, so we show the "Create Profile" button
+      if (navCreateBtn) navCreateBtn.style.display = 'block';
+    }
   });
 </script>
 
 <style>
   header {
     background-color: var(--header-bg-color, rgba(255, 255, 255, 0.8));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    position: sticky; top: 0; z-index: 100;
   }
-  nav {
-    height: 70px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .brand-logo-link {
-    display: flex;
-    align-items: center;
-  }
-  .brand-logo-img {
-    height: 36px; /* Adjust size as needed */
-  }
+  nav { height: 70px; display: flex; justify-content: space-between; align-items: center; }
+  .brand-logo-link { display: flex; align-items: center; }
+  .brand-logo-img { height: 36px; }
   
-  /* Logic to switch logos based on theme */
-  :global(.logo-dark) {
-    display: none;
-  }
-  :global(html.dark .logo-light) {
-    display: none;
-  }
-  :global(html.dark .logo-dark) {
-    display: block;
-  }
+  /* Logo visibility logic */
+  :global(.logo-dark) { display: none; }
+  :global(html.dark .logo-light) { display: none; }
+  :global(html.dark .logo-dark) { display: block; }
 
-  /* Styles for the theme toggle button */
-  #theme-toggle {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 50%;
+  /* New styles for Nav Actions */
+  .nav-actions {
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: var(--text-color);
-    transition: background-color 0.2s;
+    gap: 0.75rem;
   }
-  #theme-toggle:hover {
-    background-color: var(--border-color);
+  .nav-button {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    background-color: var(--button-color);
+    color: var(--button-text-color);
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .nav-button:hover {
+    opacity: 0.8;
   }
 
-  /* Logic to switch sun/moon icons based on theme */
-  .icon-moon, :global(html.dark) .icon-sun {
-    display: none;
+  #theme-toggle {
+    background: none; border: none; cursor: pointer; padding: 0.5rem;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: var(--text-color); transition: background-color 0.2s;
   }
-  .icon-sun, :global(html.dark) .icon-moon {
-    display: block;
-  }
+  #theme-toggle:hover { background-color: var(--border-color); }
+
+  /* Sun/Moon icon visibility */
+  .icon-moon, :global(html.dark) .icon-sun { display: none; }
+  .icon-sun, :global(html.dark) .icon-moon { display: block; }
 </style>
