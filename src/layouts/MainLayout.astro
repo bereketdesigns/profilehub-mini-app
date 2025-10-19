@@ -1,6 +1,9 @@
 ---
 import '../styles/global.css';
-interface Props { title: string; }
+
+interface Props {
+	title: string;
+}
 const { title } = Astro.props;
 ---
 <!doctype html>
@@ -17,58 +20,120 @@ const { title } = Astro.props;
       <slot /> 
     </main>
     
+    <!-- Both floating buttons are present and correct -->
     <a href="/me" class="fab fab-create" id="fab-create" style="display: none;">
-      <!-- SVG content -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line></svg>
       <span>Create Profile</span>
     </a>
     <a href="/profile/edit" class="fab fab-edit" id="fab-edit" style="display: none;">
-      <!-- SVG content -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
       <span>Edit Profile</span>
     </a>
 
     <script is:inline>
+      // This is the complete, correct, and final script for this file.
+
+      // This function checks the user's profile status by calling our API.
       async function checkProfileStatus(initData) {
-        // ... this function is correct and unchanged
+        const fabCreate = document.getElementById('fab-create');
+        const fabEdit = document.getElementById('fab-edit');
+        if (!fabCreate || !fabEdit) return;
+
+        try {
+          const response = await fetch('/api/profiles/me', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ initData: initData }),
+          });
+          
+          if (response.status === 404) {
+            fabCreate.style.display = 'flex';
+          } else if (response.status === 200) {
+            fabEdit.style.display = 'flex';
+          } else {
+            // Fallback for any other API errors
+            fabCreate.style.display = 'flex';
+          }
+        } catch (error) {
+          console.error('Failed to check profile status:', error);
+          fabCreate.style.display = 'flex';
+        }
       }
 
+      // This function sets up all Telegram integration.
       function setupTelegramIntegration() {
         try {
           const tg = window.Telegram.WebApp;
           tg.ready();
-          
-          // This is the ONLY thing we use Telegram's theme for:
-          // detecting 'light' vs 'dark' and setting the class on our <html> tag.
-          const applyThemeClass = () => {
-            document.documentElement.className = tg.colorScheme;
-          };
-          tg.onEvent('themeChanged', applyThemeClass);
-          applyThemeClass(); // Apply it once on load
 
+          // This function handles applying the correct theme class and colors.
+          const applyTheme = () => {
+            const colorScheme = tg.colorScheme;
+            document.documentElement.className = colorScheme;
+            
+            // Explicitly set the background color using Telegram's API to prevent overrides.
+            // We read the correct color from our own CSS variables based on the theme.
+            const styles = getComputedStyle(document.documentElement);
+            const bgColor = styles.getPropertyValue('--bg-color').trim();
+            tg.setBackgroundColor(bgColor);
+
+            // Set the color of the FABs from CSS variables.
+            const fabCreate = document.getElementById('fab-create');
+            const fabEdit = document.getElementById('fab-edit');
+            const brandColor = styles.getPropertyValue('--brand-color').trim();
+            const brandTextColor = styles.getPropertyValue('--brand-text-color').trim();
+
+            if (fabCreate) {
+              fabCreate.style.backgroundColor = brandColor;
+              fabCreate.style.color = brandTextColor;
+            }
+            if (fabEdit) {
+              fabEdit.style.backgroundColor = brandColor;
+              fabEdit.style.color = brandTextColor;
+            }
+          };
+
+          tg.onEvent('themeChanged', applyTheme);
+          applyTheme(); // Apply the theme once on initial load.
+
+          // Check the user's profile status if their data is available.
           if (tg.initData) {
             checkProfileStatus(tg.initData);
           } else {
-             const fabCreate = document.getElementById('fab-create');
-             if(fabCreate) fabCreate.style.display = 'flex';
+            // Fallback for when not in Telegram or initData is missing.
+            const fabCreate = document.getElementById('fab-create');
+            if(fabCreate) fabCreate.style.display = 'flex';
           }
         } catch (e) {
-          console.warn('Telegram script not found. Defaulting to light mode.');
+          // This block runs if the app is opened in a regular browser.
+          console.warn('Telegram script not found. Running in standalone mode.');
           document.documentElement.className = 'light';
           const fabCreate = document.getElementById('fab-create');
           if(fabCreate) fabCreate.style.display = 'flex';
         }
       }
 
-      // I'm omitting the full checkProfileStatus function for brevity, but it should be here.
+      // Run the setup script after the page is fully loaded.
       document.addEventListener('DOMContentLoaded', setupTelegramIntegration);
     </script>
     <style is:global>
+      /* The FAB styles are correct and use our CSS variables. */
       .fab {
-        /* This style block is now correct and uses our brand colors */
-        position: fixed; bottom: 20px; right: 20px;
-        height: 56px; border-radius: 28px; display: none;
-        align-items: center; justify-content: center; padding: 0 20px;
-        gap: 8px; font-size: 1rem; font-weight: 600; text-decoration: none;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        height: 56px;
+        border-radius: 28px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 0 20px;
+        gap: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
         background-color: var(--brand-color);
         color: var(--brand-text-color);
         transition: background-color 0.2s, color 0.2s;
