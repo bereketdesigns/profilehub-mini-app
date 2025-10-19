@@ -1,51 +1,51 @@
-/* --- PALETTE 2: EVERGREEN & MINT --- */
+/* --- PALETTE: DIVINEX TECH (BLUE, ORANGE, SILVER) --- */
 
 /* This is the Light Mode theme (the default) */
 :root {
   /* Main Palette */
-  --brand-color: #059669; /* Rich Green */
-  --accent-color: #34D399; /* Bright Mint */
+  --brand-color: #006699; /* Deep Blue */
+  --accent-color: #ff6600; /* Vibrant Orange */
   
   /* UI Colors */
-  --bg-color: #FFFFFF; /* Pure White */
-  --secondary-bg-color: #F4F4F5; /* Light Gray for cards */
-  --border-color: #E4E4E7;
+  --bg-color: #F0F2F5; /* Light Silver Gray */
+  --secondary-bg-color: #FFFFFF; /* White */
+  --border-color: #D0D7DE; /* Silver Border */
   
   /* Text Colors */
-  --text-color: #27272A; /* Dark Neutral Gray */
-  --hint-color: #71717A; /* Softer Gray */
+  --text-color: #0D1117; /* Near Black */
+  --hint-color: #57606a; /* Medium Gray */
 
   /* Link & Button Colors (mapped from main palette) */
   --link-color: var(--brand-color);
-  --button-color: var(--brand-color);
+  --button-color: var(--accent-color); /* Buttons use the vibrant orange */
   --button-text-color: #FFFFFF;
 
   /* Header Color */
-  --header-bg-color: rgba(255, 255, 255, 0.8);
+  --header-bg-color: rgba(240, 242, 245, 0.8); /* Translucent version of the background */
 }
 
 /* This is the Dark Mode theme */
 html.dark {
   /* Main Palette */
-  --brand-color: #34D399; /* Bright Mint becomes primary in dark mode */
-  --accent-color: #059669; /* Rich Green as accent */
+  --brand-color: #58A6FF; /* Accessible Blue */
+  --accent-color: #ff6600; /* Vibrant Orange */
 
-  /* UI Colors (from the palette spec) */
-  --bg-color: #18181B; /* Neutral Dark Gray */
-  --secondary-bg-color: #27272A; /* Slightly lighter gray for cards */
-  --border-color: #3F3F46;
+  /* UI Colors */
+  --bg-color: #0D1117; /* Deep Charcoal */
+  --secondary-bg-color: #161B22; /* Lighter Charcoal */
+  --border-color: #30363D; /* Dark Border */
 
   /* Text Colors */
-  --text-color: #F4F4F5; /* Off-white */
-  --hint-color: #A1A1AA; /* Light Gray for hints */
+  --text-color: #E6EDF3; /* Off-white */
+  --hint-color: #7D8590; /* Light Gray */
   
-  /* Link & Button Colors (mapped from main palette) */
+  /* Link & Button Colors */
   --link-color: var(--brand-color);
-  --button-color: var(--brand-color);
-  --button-text-color: #18181B; /* Dark text on bright button */
+  --button-color: var(--accent-color);
+  --button-text-color: #FFFFFF;
 
   /* Header Color */
-  --header-bg-color: rgba(24, 24, 27, 0.8);
+  --header-bg-color: rgba(13, 17, 23, 0.8); /* Translucent version of the background */
 }
 
 /* --- Global Resets and Styles --- */
@@ -55,7 +55,7 @@ body {
   margin: 0;
   background-color: var(--bg-color);
   color: var(--text-color);
-  transition: background-color 0.2s, color 0.2s; /* Smooth theme transition */
+  transition: background-color 0.2s, color 0.2s;
 }
 .container {
   max-width: 1200px;
