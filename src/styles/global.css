@@ -24,22 +24,7 @@ html.dark {
   --brand-text-color: #FFFFFF;
 }
 
-/* 
-  hsdbvhjbsdjabvja Legacy variables for Telegram's themeParams, now mapped to our brand colors.
-  This ensures components like the floating button automatically use the new theme.
-*/
-:root, html.dark {
-  --tg-theme-bg-color: var(--bg-color);
-  --tg-theme-text-color: var(--text-color);
-  --tg-theme-hint-color: var(--hint-color);
-  --tg-theme-link-color: var(--brand-color);
-  --tg-theme-button-color: var(--brand-color);
-  --tg-theme-button-text-color: var(--brand-text-color);
-  --tg-theme-secondary-bg-color: var(--secondary-bg-color);
-}
-
-
-/* --- Base Global Styles (Unchanged) --- */
+/* --- Base Global Styles --- */
 
 *, *::before, *::after { 
   box-sizing: border-box; 
@@ -59,6 +44,6 @@ body {
 }
 
 a { 
-  color: var(--tg-theme-link-color); 
+  color: var(--brand-color);
   text-decoration: none; 
 }

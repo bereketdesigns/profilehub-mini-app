@@ -5,13 +5,11 @@ import MainLayout from '../layouts/MainLayout.astro';
   <div class="profile-page">
     <h1>Create Your Profile</h1>
     <p>Share your profile with the community.</p>
-
     <form id="profile-form" class="profile-form">
       <label>Username <input type="text" name="username" required /></label>
       <label>Bio <textarea name="bio" rows="4" required></textarea></label>
       <label>Contact Link (Optional) <input type="url" name="contact_link" placeholder="https://t.me/yourusername" /></label>
       <label>Profile Picture <input type="file" id="avatar-upload" accept="image/*" required /></label>
-      
       <button type="submit" id="submit-btn">Create Profile</button>
       <div id="form-status"></div>
     </form>
@@ -101,7 +99,8 @@ import MainLayout from '../layouts/MainLayout.astro';
     border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color);
   }
   .profile-form button {
-    background-color: var(--tg-theme-button-color, #007aff); color: var(--tg-theme-button-text-color, #fff);
+    background-color: var(--brand-color); /* Uses our brand color */
+    color: var(--brand-text-color); /* Uses our brand text color */
     padding: 0.8rem; border: none; border-radius: 8px; font-size: 1.1rem;
     font-weight: 600; cursor: pointer; margin-top: 1rem;
   }
