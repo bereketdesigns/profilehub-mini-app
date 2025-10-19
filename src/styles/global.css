@@ -17,7 +17,7 @@
 
   /* Link & Button Colors (mapped from main palette) */
   --link-color: var(--brand-color);
-  --button-color: #ff6600; /* Buttons use the vibrant orange */
+  --button-color: var(--accent-color); /* Buttons use the vibrant orange */
   --button-text-color: #FFFFFF;
 
   /* Header Color */
@@ -41,7 +41,7 @@ html.dark {
   
   /* Link & Button Colors */
   --link-color: var(--brand-color);
-  --button-color: #ff6600;
+  --button-color: var(--accent-color);
   --button-text-color: #FFFFFF;
 
   /* Header Color */
