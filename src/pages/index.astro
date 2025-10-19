@@ -1,31 +1,29 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import { supabase } from '../lib/supabase';
-import type { Product as Profile } from '@/lib/types';
+import type { Product as Profile } from '@/lib/types'; // Using an alias for clarity
 
-const { data: profiles, error } = await supabase
-  .from('profiles')
-  .select('*')
-  .order('created_at', { ascending: false });
+const { data: profiles, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
 
 if (error) { console.error("Error fetching profiles:", error.message); }
 ---
-<MainLayout title="ProfileHub - User Profiles">
+<MainLayout title="DivineX - User Profiles">
   <header class="page-header">
     <h1>All Profiles</h1>
-    <p>Discover other users in the community.</p>
+    <p>Discover other creatives in the community.</p>
   </header>
+
   {profiles && profiles.length > 0 ? (
     <div class="profile-grid">
       {profiles.map(profile => (
         <div class="profile-card">
-          <img 
-            src={profile.profile_picture_url || '/default-avatar.png'} 
-            alt={profile.username || 'User Avatar'} 
-            class="profile-avatar" 
-          />
+          <img src={profile.profile_picture_url || '/default-avatar.png'} alt={profile.username || 'User Avatar'} class="profile-avatar" />
           <h2 class="profile-username">{profile.username || 'Anonymous User'}</h2>
+          
+          {profile.profession && <p class="profile-profession">{profile.profession}</p>}
+
           <p class="profile-bio">{profile.bio || 'No bio provided.'}</p>
+          
           {profile.contact_link && (
             <a href={profile.contact_link} class="contact-link" target="_blank" rel="noopener noreferrer">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path></svg>
@@ -46,9 +44,11 @@ if (error) { console.error("Error fetching profiles:", error.message); }
   .page-header { text-align: center; margin-bottom: 2.5rem; }
   .page-header h1 { font-size: 2.5rem; margin: 0 0 0.5rem; }
   .page-header p { font-size: 1.1rem; color: var(--hint-color); margin: 0; }
+  
   .profile-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
   @media (min-width: 640px) { .profile-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 1024px) { .profile-grid { grid-template-columns: repeat(3, 1fr); } }
+
   .profile-card {
     background-color: var(--secondary-bg-color); border-radius: 20px;
     padding: 1.5rem; text-align: center; border: 1px solid var(--border-color);
@@ -60,6 +60,14 @@ if (error) { console.error("Error fetching profiles:", error.message); }
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   }
   .profile-username { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem; }
+
+  .profile-profession {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--brand-color);
+    margin: -0.25rem 0 0.75rem;
+  }
+
   .profile-bio {
     font-size: 0.95rem; color: var(--hint-color);
     line-height: 1.5; margin: 0; flex-grow: 1;
@@ -69,7 +77,7 @@ if (error) { console.error("Error fetching profiles:", error.message); }
     gap: 0.5rem; margin-top: 1.5rem; padding: 0.6rem 1rem;
     border-radius: 12px; background-color: var(--bg-color);
     border: 1px solid var(--border-color);
-    color: var(--brand-color); /* Uses our brand color */
+    color: var(--tg-theme-link-color, #007aff);
     font-weight: 500; text-decoration: none; transition: background-color 0.2s;
   }
   .contact-link:hover { background-color: var(--border-color); }
