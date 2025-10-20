@@ -8,6 +8,11 @@
     "preview": "astro preview",
     "astro": "astro"
   },
+  
+  "engines": {
+    "node": ">=18.17.1"
+  },
+
   "dependencies": {
     "@astrojs/vercel": "^8.2.10",
     "@supabase/supabase-js": "^2.75.0",
