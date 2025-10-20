@@ -1,0 +1,182 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import { supabase } from '../../lib/supabase';
+
+// This is a dynamic page. Astro gets the 'id' from the URL.
+const { id } = Astro.params;
+
+// Fetch the specific profile using the ID from the URL.
+// We also fetch its associated projects in the same query!
+const { data: profile, error } = await supabase
+  .from('profiles')
+  .select(`
+    *,
+    projects ( * )
+  `)
+  .eq('id', id)
+  .single();
+
+// If no profile is found for the ID, show a 404 page.
+if (error || !profile) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Not Found'
+  });
+}
+---
+<MainLayout title={`${profile.username} | DivineX`}>
+  <div class="profile-detail-page">
+    <!-- The new profile header layout -->
+    <header class="profile-header">
+      <img src={profile.profile_picture_url || '/default-avatar.png'} alt={profile.username} class="profile-header-avatar" />
+      <div class="profile-header-info">
+        <h1 class="profile-header-username">{profile.username}</h1>
+        {profile.profession && <p class="profile-header-profession">{profile.profession}</p>}
+        {profile.contact_link && (
+          <a href={profile.contact_link} class="contact-button" target="_blank" rel="noopener noreferrer">Contact</a>
+        )}
+      </div>
+    </header>
+
+    <!-- The full, un-truncated bio -->
+    <section class="profile-bio-full">
+      <h2>About Me</h2>
+      <p>{profile.bio || 'No bio provided.'}</p>
+    </section>
+
+    <!-- The project gallery section -->
+    <section class="project-gallery">
+      <h2>My Projects</h2>
+      {profile.projects && profile.projects.length > 0 ? (
+        <div class="project-grid">
+          {profile.projects.map(project => (
+            <div class="project-card">
+              <img src={project.image_url} alt={project.title} class="project-image" />
+              <div class="project-info">
+                <h3 class="project-title">{project.title}</h3>
+                <p class="project-description">{project.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p class="no-projects-message">This user hasn't added any projects yet.</p>
+      )}
+    </section>
+  </div>
+</MainLayout>
+
+<style>
+  .profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  @media (min-width: 768px) {
+    .profile-header {
+      flex-direction: row;
+      text-align: left;
+    }
+  }
+  .profile-header-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--bg-color);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+  .profile-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .profile-header-username {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  .profile-header-profession {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--brand-color);
+    margin: 0;
+  }
+  .contact-button {
+    display: inline-block;
+    background-color: var(--accent-color);
+    color: var(--button-text-color);
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 1rem;
+    transition: opacity 0.2s;
+  }
+  .contact-button:hover {
+    opacity: 0.85;
+  }
+
+  .profile-bio-full {
+    margin-bottom: 3rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 2rem;
+  }
+  .profile-bio-full h2, .project-gallery h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--hint-color);
+    font-weight: 500;
+  }
+  .profile-bio-full p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    white-space: pre-wrap; /* Preserves line breaks */
+  }
+
+  .project-gallery {
+    border-top: 1px solid var(--border-color);
+    padding-top: 2rem;
+  }
+  .project-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .project-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .project-card {
+    background-color: var(--secondary-bg-color);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+  }
+  .project-image {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+  }
+  .project-info {
+    padding: 1.25rem;
+  }
+  .project-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+  .project-description {
+    font-size: 0.95rem;
+    color: var(--hint-color);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .no-projects-message {
+    color: var(--hint-color);
+  }
+</style>
