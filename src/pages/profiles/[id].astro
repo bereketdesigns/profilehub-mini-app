@@ -2,31 +2,29 @@
 import MainLayout from '../../layouts/MainLayout.astro';
 import { supabase } from '../../lib/supabase';
 
-// This is a dynamic page. Astro gets the 'id' from the URL.
 const { id } = Astro.params;
 
-// Fetch the specific profile using the ID from the URL.
-// We also fetch its associated projects in the same query!
 const { data: profile, error } = await supabase
   .from('profiles')
-  .select(`
-    *,
-    projects ( * )
-  `)
+  .select(`*, projects ( * )`)
   .eq('id', id)
   .single();
 
-// If no profile is found for the ID, show a 404 page.
 if (error || !profile) {
-  return new Response(null, {
-    status: 404,
-    statusText: 'Not Found'
-  });
+  return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 ---
 <MainLayout title={`${profile.username} | DivineX`}>
   <div class="profile-detail-page">
-    <!-- The new profile header layout -->
+
+    <!-- !!! NEW: Back Button Link !!! -->
+    <div class="back-link-wrapper">
+      <a href="/" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <span>All Profiles</span>
+      </a>
+    </div>
+
     <header class="profile-header">
       <img src={profile.profile_picture_url || '/default-avatar.png'} alt={profile.username} class="profile-header-avatar" />
       <div class="profile-header-info">
@@ -38,13 +36,11 @@ if (error || !profile) {
       </div>
     </header>
 
-    <!-- The full, un-truncated bio -->
     <section class="profile-bio-full">
       <h2>About Me</h2>
       <p>{profile.bio || 'No bio provided.'}</p>
     </section>
 
-    <!-- The project gallery section -->
     <section class="project-gallery">
       <h2>My Projects</h2>
       {profile.projects && profile.projects.length > 0 ? (
@@ -67,6 +63,23 @@ if (error || !profile) {
 </MainLayout>
 
 <style>
+  /* !!! NEW: Styles for Back Button !!! */
+  .back-link-wrapper {
+    margin-bottom: 2rem;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--hint-color);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .back-link:hover {
+    color: var(--link-color);
+  }
+
   .profile-header {
     display: flex;
     flex-direction: column;
@@ -134,7 +147,7 @@ if (error || !profile) {
   .profile-bio-full p {
     font-size: 1.1rem;
     line-height: 1.7;
-    white-space: pre-wrap; /* Preserves line breaks */
+    white-space: pre-wrap;
   }
 
   .project-gallery {
