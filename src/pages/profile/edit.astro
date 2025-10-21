@@ -4,6 +4,7 @@ import type { Profile, Project } from '../../lib/types';
 ---
 <MainLayout title="Manage Profile - DivineX">
   <div class="page-container">
+    <!-- Section 1: Edit Profile Details -->
     <section class="form-section">
       <h1>Edit Profile</h1>
       <p id="page-subtitle">Initializing...</p>
@@ -27,6 +28,7 @@ import type { Profile, Project } from '../../lib/types';
       </form>
     </section>
 
+    <!-- Section 2: Manage Projects -->
     <section id="projects-section" class="form-section" style="display:none;">
       <h1>My Projects</h1>
       <div id="projects-list"></div>
@@ -36,6 +38,7 @@ import type { Profile, Project } from '../../lib/types';
     </section>
   </div>
 
+  <!-- Modal for Adding/Editing Projects -->
   <div id="project-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <h2 id="modal-title">Add Project</h2>
@@ -44,6 +47,7 @@ import type { Profile, Project } from '../../lib/types';
         <label>Title <input type="text" id="project-title" required /></label>
         <label>Description <textarea id="project-description" rows="3" required></textarea></label>
         <label>Image <input type="file" id="project-image-upload" accept="image/*" /></label>
+        <p class="image-hint">Leave empty if you don't want to change the current image.</p>
         <div class="form-actions">
           <button type="button" id="modal-cancel-btn" class="btn btn-secondary">Cancel</button>
           <button type="submit" id="modal-save-btn" class="btn btn-primary">Save Project</button>
@@ -53,6 +57,7 @@ import type { Profile, Project } from '../../lib/types';
     </div>
   </div>
 </MainLayout>
+
 <script>
   import type { Profile, Project } from '../../lib/types';
 
@@ -117,58 +122,45 @@ import type { Profile, Project } from '../../lib/types';
 
     function renderProjects() {
       if (!userProfile?.projects || !projectsList) return;
-      projectsList.innerHTML = ''; // Clear existing list
-      userProfile.projects.sort((a, b) => a.display_order - b.display_order).forEach(project => {
-    // Create elements programmatically to avoid HTML injection issues
+      projectsList.innerHTML = '';
+      userProfile.projects.sort((a,b) => a.display_order - b.display_order).forEach(project => {
         const projectEl = document.createElement('div');
         projectEl.className = 'project-item';
-
-    // Create the image div
-        const imgDiv = document.createElement('div');
-        imgDiv.className = 'project-item-img';
-    // !!! THE FIX: Set the background image safely using the style property !!!
-        imgDiv.style.backgroundImage = `url('${project.image_url}')`;
-
-    // Create the info div
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'project-item-info';
-        infoDiv.innerHTML = `<h4>${project.title}</h4><p>${project.description}</p>`;
-
-    // Create the actions div
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'project-item-actions';
-        actionsDiv.innerHTML = `
-          <button class="btn-icon edit-project-btn" data-id="${project.id}">Edit</button>
-          <button class="btn-icon delete-project-btn" data-id="${project.id}">Delete</button>
+        // !!! THE FIX: Revert to a simple <img> tag. The CSS will handle containment. !!!
+        projectEl.innerHTML = `
+          <img src="${project.image_url}" alt="${project.title}" class="project-item-img"/>
+          <div class="project-item-info"><h4>${project.title}</h4><p>${project.description}</p></div>
+          <div class="project-item-actions">
+            <button class="btn-icon edit-project-btn" data-id="${project.id}">Edit</button>
+            <button class="btn-icon delete-project-btn" data-id="${project.id}">Delete</button>
+          </div>
         `;
-
-    // Append all parts to the main element
-        projectEl.appendChild(imgDiv);
-        projectEl.appendChild(infoDiv);
-        projectEl.appendChild(actionsDiv);
-    
-    // Append the fully constructed element to the list
         projectsList.appendChild(projectEl);
       });
-
-      if (addProjectBtn) {
-       addProjectBtn.style.display = userProfile.projects.length >= 4 ? 'none' : 'block';
+      if(addProjectBtn) {
+        addProjectBtn.style.display = userProfile.projects.length >= 4 ? 'none' : 'block';
       }
     }
 
     function openProjectModal(project: Project | null = null) {
       projectForm.reset();
       projectFormStatus.textContent = '';
+      const imageHint = projectForm.querySelector('.image-hint') as HTMLParagraphElement;
+
       if (project) {
         modalTitle.textContent = 'Edit Project';
         projectIdInput.value = project.id.toString();
         projectTitleInput.value = project.title;
         projectDescriptionInput.value = project.description;
+        // !!! THE FIX: Make the image optional for editing !!!
         projectImageUpload.required = false;
+        if(imageHint) imageHint.style.display = 'block';
       } else {
         modalTitle.textContent = 'Add Project';
         projectIdInput.value = '';
+        // !!! THE FIX: Make the image required for new projects !!!
         projectImageUpload.required = true;
+        if(imageHint) imageHint.style.display = 'none';
       }
       projectModal.style.display = 'flex';
     }
@@ -191,8 +183,7 @@ import type { Profile, Project } from '../../lib/types';
           initData: tg.initData,
         };
         const response = await fetch('/api/profiles/update', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedData),
         });
         if (!response.ok) throw await response.json();
@@ -216,15 +207,23 @@ import type { Profile, Project } from '../../lib/types';
 
       try {
         let imageUrl = '';
+        // !!! THE FIX: Handle the image logic correctly !!!
         if (isEditing) {
+          // If editing, start with the existing image URL.
           const existingProject = userProfile.projects.find(p => p.id == Number(projectId));
           imageUrl = existingProject?.image_url || '';
         }
+        
         if (imageFile) {
+          // If a *new* file is chosen, upload it and overwrite the URL.
           projectFormStatus.textContent = 'Uploading image...';
           imageUrl = await uploadFile(imageFile, '/api/projects/upload');
         }
-        if (!imageUrl) throw new Error('Project image is required.');
+
+        if (!imageUrl) {
+          // This will only trigger for new projects where no file was chosen.
+          throw new Error('Project image is required.');
+        }
 
         const projectData = {
           title: projectTitleInput.value,
@@ -239,12 +238,12 @@ import type { Profile, Project } from '../../lib/types';
           : JSON.stringify({ ...projectData, profile_id: userProfile.id });
 
         const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: body,
         });
         if (!response.ok) throw await response.json();
-        await fetchFullProfileData();
+        
+        await fetchFullProfileData(); // Refresh all data
         closeProjectModal();
       } catch (err) {
         projectFormStatus.textContent = `Error: ${(err as Error).message}`;
@@ -311,9 +310,8 @@ import type { Profile, Project } from '../../lib/types';
     height: 60px;
     border-radius: 8px;
     flex-shrink: 0;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    /* !!! THE FIX: This is the definitive CSS to contain the image !!! */
+    object-fit: cover;
   }
   .project-item-info { flex-grow: 1; }
   .project-item-info h4 { margin: 0 0 0.25rem; }
@@ -322,4 +320,5 @@ import type { Profile, Project } from '../../lib/types';
   .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
   .modal-content { background-color: var(--bg-color); padding: 2rem; border-radius: 16px; width: 90%; max-width: 500px; }
   .modal-content h2 { margin-top: 0; }
+  .image-hint { font-size: 0.8em; color: var(--hint-color); margin-top: -0.5rem; }
 </style>
