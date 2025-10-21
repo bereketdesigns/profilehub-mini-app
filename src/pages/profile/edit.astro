@@ -116,22 +116,44 @@ import type { Profile, Project } from '../../lib/types';
     }
 
     function renderProjects() {
-      if (!userProfile?.projects) return;
-      projectsList.innerHTML = '';
-      userProfile.projects.sort((a,b) => a.display_order - b.display_order).forEach(project => {
+      if (!userProfile?.projects || !projectsList) return;
+      projectsList.innerHTML = ''; // Clear existing list
+      userProfile.projects.sort((a, b) => a.display_order - b.display_order).forEach(project => {
+    // Create elements programmatically to avoid HTML injection issues
         const projectEl = document.createElement('div');
         projectEl.className = 'project-item';
-        projectEl.innerHTML = `
-          <div class="project-item-img" style="background-image: url('${project.image_url}')"></div>
-          <div class="project-item-info"><h4>${project.title}</h4><p>${project.description}</p></div>
-          <div class="project-item-actions">
-            <button class="btn-icon edit-project-btn" data-id="${project.id}">Edit</button>
-            <button class="btn-icon delete-project-btn" data-id="${project.id}">Delete</button>
-          </div>
+
+    // Create the image div
+        const imgDiv = document.createElement('div');
+        imgDiv.className = 'project-item-img';
+    // !!! THE FIX: Set the background image safely using the style property !!!
+        imgDiv.style.backgroundImage = `url('${project.image_url}')`;
+
+    // Create the info div
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'project-item-info';
+        infoDiv.innerHTML = `<h4>${project.title}</h4><p>${project.description}</p>`;
+
+    // Create the actions div
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'project-item-actions';
+        actionsDiv.innerHTML = `
+          <button class="btn-icon edit-project-btn" data-id="${project.id}">Edit</button>
+          <button class="btn-icon delete-project-btn" data-id="${project.id}">Delete</button>
         `;
+
+    // Append all parts to the main element
+        projectEl.appendChild(imgDiv);
+        projectEl.appendChild(infoDiv);
+        projectEl.appendChild(actionsDiv);
+    
+    // Append the fully constructed element to the list
         projectsList.appendChild(projectEl);
       });
-      addProjectBtn.style.display = userProfile.projects.length >= 4 ? 'none' : 'block';
+
+      if (addProjectBtn) {
+       addProjectBtn.style.display = userProfile.projects.length >= 4 ? 'none' : 'block';
+      }
     }
 
     function openProjectModal(project: Project | null = null) {
