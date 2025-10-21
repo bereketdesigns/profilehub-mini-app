@@ -367,14 +367,14 @@ document.addEventListener('DOMContentLoaded', () => {
   .projects-grid {
     display: grid;
     /* MOBILE-FIRST: Default to two columns, which is good for this view */
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(1, 1fr);
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
   /* WIDER SCREENS: Switch to more columns when there's space */
   @media (min-width: 500px) {
     .projects-grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
     }
   }
   @media (min-width: 768px) {
