@@ -357,9 +357,22 @@ document.addEventListener('DOMContentLoaded', () => {
   .projects-grid {
     display: grid;
     /* This uses a modern CSS technique for responsive grids */
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     margin-bottom: 1.5rem;
+  }
+  
+  /* On slightly wider screens (e.g., larger phones), go to 3 columns */
+  @media (min-width: 480px) {
+    .projects-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  /* On tablet-sized screens and up, go to 4 columns */
+  @media (min-width: 768px) {
+    .projects-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
   }
 
   .project-card-edit {
