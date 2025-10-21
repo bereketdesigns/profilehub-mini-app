@@ -168,8 +168,15 @@ document.addEventListener('DOMContentLoaded', () => {
     projectsGrid.innerHTML = '';
     userProfile.projects.forEach((project: Project) => {
       const card = document.createElement('div');
-      card.className = 'project-card-edit';
-      card.innerHTML = `<img src="${project.image_url || '/default-avatar.png'}" alt="${project.title}" /><div class="project-card-info"><h4>${project.title}</h4></div>`;
+      card.className = 'project-card';
+      card.innerHTML = `
+        <img src="${project.image_url || '/default-avatar.png'}" alt="${project.title}" class="project-image" />
+        <div class="project-info">
+          <h3 class="project-title">${project.title}</h3>
+          <p class="project-description">${project.description || ''}</p>
+        </div>
+        <div class="edit-overlay">Click to Edit</div>
+      `;
       card.addEventListener('click', () => openProjectModal(project));
       projectsGrid.appendChild(card);
     });
@@ -353,82 +360,70 @@ document.addEventListener('DOMContentLoaded', () => {
   .projects-section { margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
   .projects-section h2 { font-size: 1.5rem; margin-bottom: 1.5rem; }
   
-  /* !!! DEFINITIVE RESPONSIVE GRID FIX !!! */
   .projects-grid {
     display: grid;
-    /* This uses a modern CSS technique for responsive grids */
-    grid-template-columns: repeat(1, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
     margin-bottom: 1.5rem;
   }
-  
-  .project-image {
-    width: 100%;
-    height: 250px;
-    object-fit: cover;
-  }
-  /* On slightly wider screens (e.g., larger phones), go to 3 columns */
-  @media (min-width: 480px) {
+  @media (min-width: 768px) {
     .projects-grid {
       grid-template-columns: repeat(2, 1fr);
     }
   }
-  /* On tablet-sized screens and up, go to 4 columns */
-  @media (min-width: 768px) {
-    .projects-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
 
-  /* On tablet-sized screens and up, go to 4 columns */
-  @media (min-width: 1080px) {
-    .projects-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-
-  .project-card-edit {
-    position: relative;
-    border-radius: 12px;
-    overflow: hidden;
-    cursor: pointer;
-    border: 1px solid var(--border-color);
+  .project-card {
     background-color: var(--secondary-bg-color);
-    /* Make the card a perfect square */
-    aspect-ratio: 1 / 1;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s ease;
+  }
+  .project-card:hover {
+    transform: translateY(-4px);
+  }
+  .project-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+  }
+  .project-info {
+    padding: 1rem;
+  }
+  .project-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+  .project-description {
+    font-size: 0.9rem;
+    color: var(--hint-color);
+    line-height: 1.5;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;  
+    overflow: hidden;
+  }
+  .edit-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0,0,0,0.5);
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  .project-card-edit:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
-    transition: all 0.2s ease;
-  }
-  .project-card-edit img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .project-card-info {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 0.75rem;
-    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
-  }
-  .project-card-info h4 {
-    font-size: 0.9rem;
     font-weight: 600;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: white; /* Text on gradient should always be light */
+    border-radius: 16px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
   }
-
+  .project-card:hover .edit-overlay {
+    opacity: 1;
+  }
+  
   .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
   .modal-content { background-color: var(--bg-color); border-radius: 16px; padding: 2rem; width: 90%; max-width: 500px; }
   .modal-content h3 { margin-top: 0; }
