@@ -2,9 +2,8 @@
 import MainLayout from '../../layouts/MainLayout.astro';
 ---
 <MainLayout title="Edit Your Profile - DivineX">
-  <!-- Reverted to the original, simpler layout container -->
+  <!-- Reverted to the original, single-column container -->
   <div class="profile-page">
-    
     <form id="profile-form" class="profile-form">
       <h1>Edit Your Profile</h1>
       <p id="page-subtitle">Initializing...</p>
@@ -41,7 +40,6 @@ import MainLayout from '../../layouts/MainLayout.astro';
       <button id="add-project-btn" class="btn btn-secondary">Add New Project</button>
     </div>
 
-    <!-- The Modal remains outside the main layout -->
     <div id="project-modal" class="modal-overlay" style="display: none;">
       <div class="modal-content">
         <h3 id="modal-title">Add New Project</h3>
@@ -66,7 +64,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
 </MainLayout>
 
 <script>
-// The entire <script> block is unchanged and correct.
+// The entire <script> block is correct, BUT we will update renderProjects()
 interface Project { id: number; title: string; description: string; image_url: string; }
 interface Profile { id: number; username: string; profession: string; bio: string; contact_link: string; profile_picture_url: string; projects: Project[]; }
 
@@ -148,12 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
     imagePreview.src = userProfile.profile_picture_url || '/default-avatar.png';
   }
 
+  // !!! THIS FUNCTION IS NOW UPDATED !!!
   function renderProjects() {
     if (!userProfile) return;
     projectsGrid.innerHTML = '';
     userProfile.projects.forEach((project: Project) => {
       const card = document.createElement('div');
-      card.className = 'project-card';
+      // Use the new class 'project-card-manage' to apply the correct styles
+      card.className = 'project-card-manage'; 
       card.innerHTML = `
         <img src="${project.image_url || '/default-avatar.png'}" alt="${project.title}" class="project-image" />
         <div class="project-info">
@@ -323,41 +323,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <style>
-  /* The single container for the page, centered and with a max-width */
-  .profile-page {
-    max-width: 900px; /* Wider max-width for desktop view */
-    margin: 0 auto;
-  }
-
-  /* !!! NEW DESKTOP LAYOUT USING GRID !!! */
-  @media (min-width: 992px) {
-    .profile-page {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      grid-template-areas: "form projects";
-      gap: 2rem;
-      align-items: start;
-    }
-    .profile-form {
-      grid-area: form;
-    }
-    .projects-section {
-      grid-area: projects;
-      margin-top: 0; /* Remove top margin on desktop */
-    }
-  }
-
-  .profile-form {
-    background-color: var(--secondary-bg-color);
-    padding: 1.5rem;
-    border-radius: 16px;
-    border: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .profile-form h1 { font-size: 2rem; margin-top: 0; }
+  .profile-page { max-width: 600px; margin: 0 auto; }
+  .profile-form h1 { font-size: 2rem; }
   #page-subtitle { color: var(--hint-color); }
+  .profile-form { display: flex; flex-direction: column; gap: 1rem; background-color: var(--secondary-bg-color); padding: 1.5rem; border-radius: 16px; margin-top: 2rem; }
   .profile-form label { font-weight: 500; display: flex; flex-direction: column; gap: 0.25rem; }
   .profile-form input, .profile-form textarea, .profile-form select {
     width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px;
@@ -365,19 +334,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   .image-preview-wrapper { display: flex; align-items: center; gap: 1rem; font-size: 0.9em; color: var(--hint-color); }
   .image-preview { height: 50px; width: 50px; border-radius: 8px; object-fit: cover; }
-  .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1rem; width: 100%; }
+  .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1rem; }
+  .btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background-color: var(--brand-color); color: var(--button-text-color); }
+  .btn-secondary { background-color: var(--secondary-bg-color); color: var(--text-color); border: 1px solid var(--border-color); }
+  .btn-danger { background-color: #e53e3e; color: white; }
+  #form-status { font-size: 0.9rem; color: var(--hint-color); text-align: center; flex-grow: 1; }
+  .projects-section { margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+  .projects-section h2 { font-size: 1.5rem; margin-bottom: 1.5rem; }
   
-  .projects-section { 
-    margin-top: 3rem; 
-    border-top: 1px solid var(--border-color);
-    padding-top: 2rem;
-  }
-  .projects-section h2 { font-size: 1.5rem; margin: 0 0 1.5rem; }
-  
+  /* --- STYLES FOR THE PROJECT MANAGEMENT GRID --- */
   .projects-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 1.5rem;
     margin-bottom: 1.5rem;
   }
   @media (min-width: 500px) {
@@ -385,41 +356,59 @@ document.addEventListener('DOMContentLoaded', () => {
       grid-template-columns: repeat(3, 1fr);
     }
   }
-  @media (min-width: 992px) { /* Corresponds to desktop layout */
-    .projects-grid {
-      grid-template-columns: repeat(2, 1fr); /* Force 2 columns on desktop */
-    }
-  }
 
-  .project-card {
+  /* This is the new card style for the management view */
+  .project-card-manage {
     background-color: var(--bg-color);
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--border-color);
     cursor: pointer;
     position: relative;
     transition: transform 0.2s ease;
-    aspect-ratio: 1 / 1; 
   }
-  .project-card:hover { transform: translateY(-4px); }
-  .project-image { width: 100%; height: 100%; object-fit: cover; }
-  .project-info {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 0.75rem;
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+  .project-card-manage:hover {
+    transform: translateY(-4px);
   }
-  .project-title {
-    font-size: 0.9rem; font-weight: 600; margin: 0;
-    color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  .project-card-manage .project-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
   }
-  .project-description { display: none; }
-  .edit-overlay {
-    position: absolute; inset: 0; background-color: rgba(0,0,0,0.5);
-    color: white; display: flex; align-items: center; justify-content: center;
-    font-weight: 600; border-radius: 12px; opacity: 0;
-    transition: opacity 0.2s ease; font-size: 0.9rem;
+  .project-card-manage .project-info {
+    padding: 1rem;
   }
-  .project-card:hover .edit-overlay { opacity: 1; }
+  .project-card-manage .project-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+  .project-card-manage .project-description {
+    font-size: 0.9rem;
+    color: var(--hint-color);
+    line-height: 1.5;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;  
+    overflow: hidden;
+  }
+  .project-card-manage .edit-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0,0,0,0.5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    border-radius: 16px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .project-card-manage:hover .edit-overlay {
+    opacity: 1;
+  }
   
   .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
   .modal-content { background-color: var(--bg-color); border-radius: 16px; padding: 2rem; width: 90%; max-width: 500px; }
@@ -427,10 +416,4 @@ document.addEventListener('DOMContentLoaded', () => {
   #project-form { display: flex; flex-direction: column; gap: 1rem; }
   .modal-actions { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; }
   #modal-status { font-size: 0.9rem; color: var(--hint-color); }
-  .btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-primary { background-color: var(--brand-color); color: var(--button-text-color); }
-  .btn-secondary { background-color: var(--secondary-bg-color); color: var(--text-color); border: 1px solid var(--border-color); }
-  .btn-danger { background-color: #e53e3e; color: white; }
-  #form-status { font-size: 0.9rem; color: var(--hint-color); text-align: center; width: 100%; }
 </style>
