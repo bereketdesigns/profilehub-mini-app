@@ -38,16 +38,12 @@ import MainLayout from '../../layouts/MainLayout.astro';
       </div>
     </form>
 
-    <!-- !!! NEW: Manage Projects Section !!! -->
     <div id="projects-section" class="projects-section" style="display: none;">
       <h2>Manage Projects</h2>
-      <div id="projects-grid" class="projects-grid">
-        <!-- Project cards will be injected here by JavaScript -->
-      </div>
+      <div id="projects-grid" class="projects-grid"></div>
       <button id="add-project-btn" class="btn btn-secondary">Add New Project</button>
     </div>
 
-    <!-- !!! NEW: Modal for Adding/Editing a Project !!! -->
     <div id="project-modal" class="modal-overlay" style="display: none;">
       <div class="modal-content">
         <h3 id="modal-title">Add New Project</h3>
@@ -72,51 +68,48 @@ import MainLayout from '../../layouts/MainLayout.astro';
 </MainLayout>
 
 <script>
+// --- TYPE DEFINITIONS for Type-Safety ---
+interface Project { id: number; title: string; description: string; image_url: string; }
+interface Profile { id: number; username: string; profession: string; bio: string; contact_link: string; profile_picture_url: string; projects: Project[]; }
+
 document.addEventListener('DOMContentLoaded', () => {
-  let userProfile = null;
-  let tg = null;
+  let userProfile: Profile | null = null;
+  let tg: any = null;
 
-  // --- Element Selectors for Main Profile ---
-  const profileForm = document.getElementById('profile-form');
-  const pageSubtitle = document.getElementById('page-subtitle');
-  const mainFormFields = document.getElementById('main-form-fields');
-  const profileIdInput = document.getElementById('profile-id');
-  const usernameInput = document.getElementById('username');
-  const professionInput = document.getElementById('profession');
-  const bioInput = document.getElementById('bio');
-  const contactLinkInput = document.getElementById('contact_link');
-  const avatarUpload = document.getElementById('avatar-upload');
-  const profilePictureUrlInput = document.getElementById('profile-picture-url');
-  const imagePreview = document.getElementById('image-preview');
-  const profileFormStatus = document.getElementById('form-status');
-  const profileSubmitBtn = document.getElementById('submit-btn');
-
-  // --- Element Selectors for Projects ---
-  const projectsSection = document.getElementById('projects-section');
-  const projectsGrid = document.getElementById('projects-grid');
-  const addProjectBtn = document.getElementById('add-project-btn');
-
-  // --- Element Selectors for Project Modal ---
-  const projectModal = document.getElementById('project-modal');
-  const modalTitle = document.getElementById('modal-title');
-  const projectForm = document.getElementById('project-form');
-  const projectIdInput = document.getElementById('project-id');
-  const projectImageUrlInput = document.getElementById('project-image-url');
-  const projectTitleInput = document.getElementById('project-title');
-  const projectDescriptionInput = document.getElementById('project-description');
-  const projectImageUpload = document.getElementById('project-image-upload');
-  const projectImagePreview = document.getElementById('project-image-preview');
-  const cancelProjectBtn = document.getElementById('cancel-project-btn');
-  const saveProjectBtn = document.getElementById('save-project-btn');
-  const deleteProjectBtn = document.getElementById('delete-project-btn');
-  const modalStatus = document.getElementById('modal-status');
+  // --- Type-Safe Element Selectors ---
+  const profileForm = document.getElementById('profile-form') as HTMLFormElement;
+  const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement;
+  const mainFormFields = document.getElementById('main-form-fields') as HTMLDivElement;
+  const profileIdInput = document.getElementById('profile-id') as HTMLInputElement;
+  const usernameInput = document.getElementById('username') as HTMLInputElement;
+  const professionInput = document.getElementById('profession') as HTMLSelectElement;
+  const bioInput = document.getElementById('bio') as HTMLTextAreaElement;
+  const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement;
+  const avatarUpload = document.getElementById('avatar-upload') as HTMLInputElement;
+  const profilePictureUrlInput = document.getElementById('profile-picture-url') as HTMLInputElement;
+  const imagePreview = document.getElementById('image-preview') as HTMLImageElement;
+  const profileFormStatus = document.getElementById('form-status') as HTMLDivElement;
+  const profileSubmitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const projectsSection = document.getElementById('projects-section') as HTMLDivElement;
+  const projectsGrid = document.getElementById('projects-grid') as HTMLDivElement;
+  const addProjectBtn = document.getElementById('add-project-btn') as HTMLButtonElement;
+  const projectModal = document.getElementById('project-modal') as HTMLDivElement;
+  const modalTitle = document.getElementById('modal-title') as HTMLHeadingElement;
+  const projectForm = document.getElementById('project-form') as HTMLFormElement;
+  const projectIdInput = document.getElementById('project-id') as HTMLInputElement;
+  const projectImageUrlInput = document.getElementById('project-image-url') as HTMLInputElement;
+  const projectTitleInput = document.getElementById('project-title') as HTMLInputElement;
+  const projectDescriptionInput = document.getElementById('project-description') as HTMLTextAreaElement;
+  const projectImageUpload = document.getElementById('project-image-upload') as HTMLInputElement;
+  const projectImagePreview = document.getElementById('project-image-preview') as HTMLImageElement;
+  const cancelProjectBtn = document.getElementById('cancel-project-btn') as HTMLButtonElement;
+  const saveProjectBtn = document.getElementById('save-project-btn') as HTMLButtonElement;
+  const deleteProjectBtn = document.getElementById('delete-project-btn') as HTMLButtonElement;
+  const modalStatus = document.getElementById('modal-status') as HTMLDivElement;
   
   // --- Main Initialization ---
   function initializeApp() {
-    if (!window.Telegram?.WebApp?.initData) {
-      setTimeout(initializeApp, 50);
-      return;
-    }
+    if (!window.Telegram?.WebApp?.initData) { setTimeout(initializeApp, 50); return; }
     tg = window.Telegram.WebApp;
     tg.ready();
     fetchProfileAndProjects();
@@ -128,28 +121,24 @@ document.addEventListener('DOMContentLoaded', () => {
     pageSubtitle.textContent = "Loading your data...";
     try {
       const response = await fetch('/api/profiles/me-with-projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData: tg.initData }),
       });
       if (!response.ok) throw new Error('Could not fetch profile and projects.');
       const data = await response.json();
       userProfile = data.profile;
-      
       populateProfileForm();
       renderProjects();
-      
       mainFormFields.style.display = 'flex';
       projectsSection.style.display = 'block';
       pageSubtitle.textContent = 'Update your public information.';
-    } catch (err) {
-      pageSubtitle.textContent = `Error: ${err.message}`;
-    }
+    } catch (err) { pageSubtitle.textContent = `Error: ${(err as Error).message}`; }
   }
 
   // --- UI Rendering ---
   function populateProfileForm() {
-    profileIdInput.value = userProfile.id;
+    if (!userProfile) return;
+    profileIdInput.value = userProfile.id.toString();
     usernameInput.value = userProfile.username || '';
     professionInput.value = userProfile.profession || '';
     bioInput.value = userProfile.bio || '';
@@ -159,32 +148,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderProjects() {
-    projectsGrid.innerHTML = ''; // Clear existing projects
-    userProfile.projects.forEach(project => {
+    if (!userProfile) return;
+    projectsGrid.innerHTML = '';
+    userProfile.projects.forEach((project: Project) => {
       const card = document.createElement('div');
       card.className = 'project-card-edit';
-      // !!! FIX #1: Added a specific class 'project-avatar-edit' to the image tag !!!
-      card.innerHTML = `
-        <img src="${project.image_url || '/default-avatar.png'}" alt="${project.title}" class="project-avatar-edit" />
-        <div class="project-card-info">
-          <h4>${project.title}</h4>
-        </div>
-      `;
+      card.innerHTML = `<img src="${project.image_url || '/default-avatar.png'}" alt="${project.title}" class="project-avatar-edit" /><div class="project-card-info"><h4>${project.title}</h4></div>`;
       card.addEventListener('click', () => openProjectModal(project));
       projectsGrid.appendChild(card);
     });
     addProjectBtn.disabled = userProfile.projects.length >= 4;
   }
 
-  function openProjectModal(project = null) {
+  function openProjectModal(project: Project | null = null) {
     projectForm.reset();
     modalStatus.textContent = '';
     projectImagePreview.style.display = 'none';
     projectImagePreview.src = '';
 
-    if (project) { // Editing existing project
+    if (project) {
       modalTitle.textContent = 'Edit Project';
-      projectIdInput.value = project.id;
+      projectIdInput.value = project.id.toString();
       projectImageUrlInput.value = project.image_url || '';
       projectTitleInput.value = project.title;
       projectDescriptionInput.value = project.description;
@@ -193,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
         projectImagePreview.style.display = 'block';
       }
       deleteProjectBtn.style.display = 'block';
-    } else { // Adding new project
+    } else {
       modalTitle.textContent = 'Add New Project';
       projectIdInput.value = '';
       projectImageUrlInput.value = '';
@@ -202,103 +186,72 @@ document.addEventListener('DOMContentLoaded', () => {
     projectModal.style.display = 'flex';
   }
 
-  function closeProjectModal() {
-    projectModal.style.display = 'none';
-  }
+  function closeProjectModal() { projectModal.style.display = 'none'; }
   
-  async function uploadFile(file, endpoint) {
-    const response = await fetch(endpoint, {
-      method: 'POST', body: file, headers: { 'Content-Type': file.type }
-    });
+  async function uploadFile(file: File, endpoint: string): Promise<string> {
+    const response = await fetch(endpoint, { method: 'POST', body: file, headers: { 'Content-Type': file.type } });
     if (!response.ok) throw new Error('Upload failed.');
     return (await response.json()).url;
   }
   
   // --- Event Handlers ---
-  async function handleProfileUpdate(e) {
+  async function handleProfileUpdate(e: Event) {
     e.preventDefault();
     profileSubmitBtn.disabled = true;
     profileFormStatus.textContent = 'Processing...';
-
     const newImageFile = avatarUpload.files?.[0];
-
     try {
       if (newImageFile) {
         profileFormStatus.textContent = 'Uploading new profile picture...';
         const uploadedImageUrl = await uploadFile(newImageFile, '/api/profiles/upload');
         profilePictureUrlInput.value = uploadedImageUrl;
       }
-      
       profileFormStatus.textContent = 'Saving profile changes...';
-      const formData = new FormData(profileForm);
       const updatedData = {
-        username: formData.get('username'),
-        bio: formData.get('bio'),
-        contact_link: formData.get('contact_link'),
-        profession: formData.get('profession'),
+        username: usernameInput.value,
+        bio: bioInput.value,
+        contact_link: contactLinkInput.value,
+        profession: professionInput.value,
         profile_picture_url: profilePictureUrlInput.value,
         initData: tg.initData,
       };
-
-      const response = await fetch('/api/profiles/update', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData),
-      });
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || 'Failed to save changes.');
-      }
-
+      const response = await fetch('/api/profiles/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedData) });
+      if (!response.ok) { const result = await response.json(); throw new Error(result.error || 'Failed to save changes.'); }
       alert('Profile updated successfully!');
-    } catch (err) {
-      alert(`Failed to save profile: ${err.message}`);
-    } finally {
+    } catch (err) { alert(`Failed to save profile: ${(err as Error).message}`); } finally {
       profileSubmitBtn.disabled = false;
       profileFormStatus.textContent = '';
     }
   }
 
-  async function handleProjectSave(e) {
+  async function handleProjectSave(e: Event) {
     e.preventDefault();
     saveProjectBtn.disabled = true;
     modalStatus.textContent = 'Saving...';
     try {
       let imageUrl = projectImageUrlInput.value;
-      const imageFile = projectImageUpload.files[0];
+      const imageFile = projectImageUpload.files?.[0];
       if (imageFile) {
         modalStatus.textContent = 'Uploading project image...';
         imageUrl = await uploadFile(imageFile, '/api/projects/upload');
       }
-
-      if (!imageUrl) {
-        throw new Error('An image is required for a project.');
-      }
-
+      if (!imageUrl && !projectIdInput.value) { throw new Error('An image is required for a new project.'); }
       const isEditing = !!projectIdInput.value;
       const endpoint = isEditing ? '/api/projects/update' : '/api/projects/create';
+      if (!userProfile) throw new Error("User profile not loaded.");
       const payload = {
         initData: tg.initData,
         profile_id: userProfile.id,
-        project_id: isEditing ? projectIdInput.value : undefined,
+        project_id: isEditing ? parseInt(projectIdInput.value) : undefined,
         title: projectTitleInput.value,
         description: projectDescriptionInput.value,
         image_url: imageUrl,
       };
-
-      const response = await fetch(endpoint, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || 'Failed to save project.');
-      }
-      
-      await fetchProfileAndProjects(); // Refresh all data
+      const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!response.ok) { const result = await response.json(); throw new Error(result.error || 'Failed to save project.'); }
+      await fetchProfileAndProjects();
       closeProjectModal();
-    } catch (err) {
-      modalStatus.textContent = `Error: ${err.message}`;
-    } finally {
+    } catch (err) { modalStatus.textContent = `Error: ${(err as Error).message}`; } finally {
       saveProjectBtn.disabled = false;
     }
   }
@@ -308,17 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
     deleteProjectBtn.disabled = true;
     modalStatus.textContent = 'Deleting...';
     try {
-      const response = await fetch('/api/projects/delete', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: tg.initData, project_id: projectIdInput.value })
-      });
+      const response = await fetch('/api/projects/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ initData: tg.initData, project_id: parseInt(projectIdInput.value) }) });
       if (!response.ok) throw new Error('Failed to delete project.');
-
-      await fetchProfileAndProjects(); // Refresh all data
+      await fetchProfileAndProjects();
       closeProjectModal();
-    } catch (err) {
-      modalStatus.textContent = `Error: ${err.message}`;
-    } finally {
+    } catch (err) { modalStatus.textContent = `Error: ${(err as Error).message}`; } finally {
       deleteProjectBtn.disabled = false;
     }
   }
@@ -330,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     projectForm.addEventListener('submit', handleProjectSave);
     deleteProjectBtn.addEventListener('click', handleDeleteProject);
   }
-
+  
   initializeApp();
 });
 </script>
@@ -340,10 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
   #page-subtitle { color: var(--hint-color); }
   .profile-form { display: flex; flex-direction: column; gap: 1rem; background-color: var(--secondary-bg-color); padding: 1.5rem; border-radius: 16px; margin-top: 2rem; }
   .profile-form label { font-weight: 500; display: flex; flex-direction: column; gap: 0.25rem; }
-  .profile-form input, .profile-form textarea, .profile-form select {
-    width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px;
-    border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color);
-  }
+  .profile-form input, .profile-form textarea, .profile-form select { width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color); }
   .image-preview-wrapper { display: flex; align-items: center; gap: 1rem; font-size: 0.9em; color: var(--hint-color); }
   .image-preview { height: 50px; width: 50px; border-radius: 8px; object-fit: cover; }
   .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1rem; }
@@ -355,68 +299,26 @@ document.addEventListener('DOMContentLoaded', () => {
   #form-status { font-size: 0.9rem; color: var(--hint-color); text-align: center; flex-grow: 1; }
   .projects-section { margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
   .projects-section h2 { font-size: 1.5rem; margin-bottom: 1.5rem; }
-  
-  .projects-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  @media (min-width: 768px) {
-    .projects-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-
+  .projects-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  @media (min-width: 768px) { .projects-grid { grid-template-columns: repeat(4, 1fr); } }
   .project-card-edit {
-    background-color: var(--bg-color); /* Change to main background for a cleaner look */
-    border-radius: 12px;
-    padding: 1rem;
-    text-align: center;
-    cursor: pointer;
-    border: 1px solid var(--border-color);
+    background-color: var(--bg-color); border-radius: 12px; padding: 1rem;
+    text-align: center; cursor: pointer; border: 1px solid var(--border-color);
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center; /* Center content vertically */
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center;
   }
-  .project-card-edit:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  }
-
-  /* !!! FIX #2: The new CSS class to make the image circular !!! */
+  .project-card-edit:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
   .project-avatar-edit {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 0.75rem;
-    border: 2px solid var(--bg-color);
-    background-color: var(--border-color);
+    width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+    margin-bottom: 0.75rem; border: 2px solid var(--bg-color); background-color: var(--border-color);
   }
-  
-  /* Remove the old, incorrect rule */
-  .project-card-edit img {
-    /* This rule is no longer needed, the one above is more specific */
-  }
-
-  .project-card-info {
-    padding: 0; /* No extra padding needed */
-  }
+  .project-card-info { padding: 0; }
   .project-card-info h4 {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin: 0;
-    color: var(--text-color);
-    width: 100%;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 0.9rem; font-weight: 600; margin: 0;
+    color: var(--text-color); width: 100%; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-
   .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
   .modal-content { background-color: var(--bg-color); border-radius: 16px; padding: 2rem; width: 90%; max-width: 500px; }
   .modal-content h3 { margin-top: 0; }
