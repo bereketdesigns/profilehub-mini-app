@@ -60,11 +60,9 @@ import type { Profile, Project } from '../../lib/types';
   import type { Profile, Project } from '../../lib/types';
 
   document.addEventListener('DOMContentLoaded', () => {
-    // --- GLOBAL STATE ---
     let userProfile: Profile | null = null;
     const tg = window.Telegram?.WebApp;
 
-    // --- ELEMENT SELECTORS ---
     const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement;
     const profileForm = document.getElementById('profile-form') as HTMLFormElement;
     const profileSubmitBtn = document.getElementById('profile-submit-btn') as HTMLButtonElement;
@@ -87,22 +85,18 @@ import type { Profile, Project } from '../../lib/types';
     const modalSaveBtn = document.getElementById('modal-save-btn') as HTMLButtonElement;
     const projectFormStatus = document.getElementById('project-form-status') as HTMLDivElement;
 
-    // --- INITIALIZATION ---
     function initializeApp() {
-      if (!tg?.initData) {
-        setTimeout(initializeApp, 50);
-        return;
-      }
+      if (!tg?.initData) { setTimeout(initializeApp, 50); return; }
       tg.ready();
       attachEventListeners();
       fetchFullProfileData();
     }
 
-    // --- DATA FETCHING & RENDERING ---
     async function fetchFullProfileData() {
       pageSubtitle.textContent = 'Loading your profile...';
       try {
-        const response = await fetch('/api/profiles/me', {
+        // !!! THE FIX: Call the correct API endpoint that includes projects !!!
+        const response = await fetch('/api/profiles/me-with-projects', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ initData: tg.initData }),
         });
@@ -144,7 +138,6 @@ import type { Profile, Project } from '../../lib/types';
       addProjectBtn.style.display = userProfile.projects.length >= 4 ? 'none' : 'block';
     }
 
-    // --- MODAL & FORM LOGIC ---
     function openProjectModal(project: Project | null = null) {
       projectForm.reset();
       projectFormStatus.textContent = '';
@@ -168,7 +161,6 @@ import type { Profile, Project } from '../../lib/types';
 
     async function handleProfileSave(e: Event) {
       e.preventDefault();
-      // This function currently only saves the profile details, not the main image.
       profileSubmitBtn.disabled = true;
       profileFormStatus.textContent = 'Saving profile...';
       try {
@@ -255,7 +247,6 @@ import type { Profile, Project } from '../../lib/types';
       } catch (err) { alert(`Error: ${(err as Error).message}`); }
     }
 
-    // --- EVENT LISTENERS ---
     function attachEventListeners() {
       profileForm.addEventListener('submit', handleProfileSave);
       projectForm.addEventListener('submit', handleProjectSave);
@@ -274,14 +265,12 @@ import type { Profile, Project } from '../../lib/types';
       });
     }
     
-    // --- HELPERS ---
     async function uploadFile(file: File, url: string): Promise<string> {
       const response = await fetch(url, { method: 'POST', body: file });
       if (!response.ok) throw new Error('Upload failed.');
       return (await response.json()).url;
     }
-
-    // --- START THE APP ---
+    
     initializeApp();
   });
 </script>
