@@ -370,9 +370,15 @@ document.addEventListener('DOMContentLoaded', () => {
   
   .projects-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: 1fr));
     gap: 1rem;
     margin-bottom: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .project-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .project-card {
