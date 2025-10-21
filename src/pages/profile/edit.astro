@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
     width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px;
     border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color);
   }
-  .image-preview-wrapper { height: 50px; width: 50px; align-items: center; gap: 1rem; font-size: 0.9em; color: var(--hint-color); }
+  .image-preview-wrapper { display: flex; align-items: center; gap: 1rem; font-size: 0.9em; color: var(--hint-color); }
   .image-preview { height: 50px; width: 50px; border-radius: 8px; object-fit: cover; }
   .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1rem; }
   .btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; }
@@ -353,40 +353,46 @@ document.addEventListener('DOMContentLoaded', () => {
   .projects-section { margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
   .projects-section h2 { font-size: 1.5rem; margin-bottom: 1.5rem; }
   
-  /* !!! RESPONSIVE GRID AND SIZE FIX !!! */
+  /* !!! DEFINITIVE RESPONSIVE GRID FIX !!! */
   .projects-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 columns on mobile */
+    /* This uses a modern CSS technique for responsive grids */
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
-  @media (max-width: 768px) {
-    .projects-grid {
-      grid-template-columns: repeat(4, 1fr); /* 4 columns on desktop */
-    }
-  }
 
   .project-card-edit {
-    background-color: var(--secondary-bg-color);
+    position: relative;
     border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
     border: 1px solid var(--border-color);
-    transition: transform 0.2s ease-in-out;
+    background-color: var(--secondary-bg-color);
+    /* Make the card a perfect square */
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .project-card-edit:hover {
-    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
   }
   .project-card-edit img {
-    width: 50px;
-    height: 50px;
-    display: block;
-    aspect-ratio: 16 / 9;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    background-color: var(--border-color);
+    display: block;
   }
   .project-card-info {
-    padding: 0.75rem 1rem;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.75rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
   }
   .project-card-info h4 {
     font-size: 0.9rem;
@@ -395,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--text-color);
+    color: white; /* Text on gradient should always be light */
   }
 
   .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
