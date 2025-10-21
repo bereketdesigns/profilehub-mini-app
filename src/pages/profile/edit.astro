@@ -4,7 +4,6 @@ import type { Profile, Project } from '../../lib/types';
 ---
 <MainLayout title="Manage Profile - DivineX">
   <div class="page-container">
-    <!-- Section 1: Edit Profile Details -->
     <section class="form-section">
       <h1>Edit Profile</h1>
       <p id="page-subtitle">Initializing...</p>
@@ -28,7 +27,6 @@ import type { Profile, Project } from '../../lib/types';
       </form>
     </section>
 
-    <!-- Section 2: Manage Projects -->
     <section id="projects-section" class="form-section" style="display:none;">
       <h1>My Projects</h1>
       <div id="projects-list"></div>
@@ -38,7 +36,6 @@ import type { Profile, Project } from '../../lib/types';
     </section>
   </div>
 
-  <!-- Modal for Adding/Editing Projects -->
   <div id="project-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <h2 id="modal-title">Add Project</h2>
@@ -95,7 +92,6 @@ import type { Profile, Project } from '../../lib/types';
     async function fetchFullProfileData() {
       pageSubtitle.textContent = 'Loading your profile...';
       try {
-        // !!! THE FIX: Call the correct API endpoint that includes projects !!!
         const response = await fetch('/api/profiles/me-with-projects', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ initData: tg.initData }),
@@ -126,7 +122,7 @@ import type { Profile, Project } from '../../lib/types';
         const projectEl = document.createElement('div');
         projectEl.className = 'project-item';
         projectEl.innerHTML = `
-          <img src="${project.image_url}" alt="${project.title}" class="project-item-img"/>
+          <div class="project-item-img" style="background-image: url('${project.image_url}')"></div>
           <div class="project-item-info"><h4>${project.title}</h4><p>${project.description}</p></div>
           <div class="project-item-actions">
             <button class="btn-icon edit-project-btn" data-id="${project.id}">Edit</button>
@@ -288,7 +284,15 @@ import type { Profile, Project } from '../../lib/types';
   .form-status { font-size: 0.9rem; color: var(--hint-color); text-align: left; flex-grow: 1; }
   #projects-list { display: flex; flex-direction: column; gap: 1rem; }
   .project-item { display: flex; align-items: center; gap: 1rem; background-color: var(--bg-color); padding: 1rem; border-radius: 12px; }
-  .project-item-img { width: 80px; height: 60px; object-fit: cover; border-radius: 100px; }
+  .project-item-img {
+    width: 80px;
+    height: 60px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
   .project-item-info { flex-grow: 1; }
   .project-item-info h4 { margin: 0 0 0.25rem; }
   .project-item-info p { margin: 0; font-size: 0.9em; color: var(--hint-color); }
