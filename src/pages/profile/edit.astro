@@ -3,7 +3,6 @@ import MainLayout from '../../layouts/MainLayout.astro';
 ---
 <MainLayout title="Edit Your Profile - DivineX">
   <div class="profile-page">
-    <!-- Main Profile Form -->
     <form id="profile-form" class="profile-form">
       <h1>Edit Your Profile</h1>
       <p id="page-subtitle">Initializing...</p>
@@ -11,7 +10,6 @@ import MainLayout from '../../layouts/MainLayout.astro';
       <div id="main-form-fields" style="display: none; width: 100%; display: flex; flex-direction: column; gap: 1rem;">
         <input type="hidden" id="profile-id" />
         <input type="hidden" name="profile_picture_url" id="profile-picture-url" />
-        
         <label>Username <input type="text" name="username" id="username" required /></label>
         <label>Profession
           <select name="profession" id="profession" required>
@@ -21,7 +19,6 @@ import MainLayout from '../../layouts/MainLayout.astro';
             <option value="Product Manager">Product Manager</option>
             <option value="Illustrator">Illustrator</option>
             <option value="Photographer">Photographer</option>
-            <option value="Combo Deals">Combo Deals</option>
           </select>
         </label>
         <label>Bio <textarea name="bio" id="bio" rows="4" required></textarea></label>
@@ -31,23 +28,17 @@ import MainLayout from '../../layouts/MainLayout.astro';
           <span>Current:</span>
           <img src="" alt="Current profile picture" id="image-preview" class="image-preview" />
         </div>
-        <div class="form-actions">
-          <button type="submit" id="submit-btn" class="btn btn-primary">Save Profile Changes</button>
-        </div>
+        <div class="form-actions"><button type="submit" id="submit-btn" class="btn btn-primary">Save Profile Changes</button></div>
         <div id="form-status"></div>
       </div>
     </form>
 
-    <!-- !!! NEW: Manage Projects Section !!! -->
     <div id="projects-section" class="projects-section" style="display: none;">
       <h2>Manage Projects</h2>
-      <div id="projects-grid" class="projects-grid">
-        <!-- Project cards will be injected here by JavaScript -->
-      </div>
+      <div id="projects-grid" class="projects-grid"></div>
       <button id="add-project-btn" class="btn btn-secondary">Add New Project</button>
     </div>
 
-    <!-- !!! NEW: Modal for Adding/Editing a Project !!! -->
     <div id="project-modal" class="modal-overlay" style="display: none;">
       <div class="modal-content">
         <h3 id="modal-title">Add New Project</h3>
@@ -72,50 +63,62 @@ import MainLayout from '../../layouts/MainLayout.astro';
 </MainLayout>
 
 <script>
+// --- TYPE DEFINITIONS for Type-Safety ---
+interface Project {
+  id: number;
+  title: string;
+  description: string;
+  image_url: string;
+}
+interface Profile {
+  id: number;
+  username: string;
+  profession: string;
+  bio: string;
+  contact_link: string;
+  profile_picture_url: string;
+  projects: Project[];
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  let userProfile = null;
-  let tg = null;
+  let userProfile: Profile | null = null;
+  let tg: any = null; // We accept 'any' for the external Telegram object
 
-  // --- Element Selectors for Main Profile ---
-  const profileForm = document.getElementById('profile-form');
-  const pageSubtitle = document.getElementById('page-subtitle');
-  const mainFormFields = document.getElementById('main-form-fields');
-  const profileIdInput = document.getElementById('profile-id');
-  const usernameInput = document.getElementById('username');
-  const professionInput = document.getElementById('profession');
-  const bioInput = document.getElementById('bio');
-  const contactLinkInput = document.getElementById('contact_link');
-  const avatarUpload = document.getElementById('avatar-upload');
-  const profilePictureUrlInput = document.getElementById('profile-picture-url');
-  const imagePreview = document.getElementById('image-preview');
-  const profileFormStatus = document.getElementById('form-status');
-  const profileSubmitBtn = document.getElementById('submit-btn');
-
-  // --- Element Selectors for Projects ---
-  const projectsSection = document.getElementById('projects-section');
-  const projectsGrid = document.getElementById('projects-grid');
-  const addProjectBtn = document.getElementById('add-project-btn');
-
-  // --- Element Selectors for Project Modal ---
-  const projectModal = document.getElementById('project-modal');
-  const modalTitle = document.getElementById('modal-title');
-  const projectForm = document.getElementById('project-form');
-  const projectIdInput = document.getElementById('project-id');
-  const projectImageUrlInput = document.getElementById('project-image-url');
-  const projectTitleInput = document.getElementById('project-title');
-  const projectDescriptionInput = document.getElementById('project-description');
-  const projectImageUpload = document.getElementById('project-image-upload');
-  const projectImagePreview = document.getElementById('project-image-preview');
-  const cancelProjectBtn = document.getElementById('cancel-project-btn');
-  const saveProjectBtn = document.getElementById('save-project-btn');
-  const deleteProjectBtn = document.getElementById('delete-project-btn');
-  const modalStatus = document.getElementById('modal-status');
+  // --- Type-Safe Element Selectors ---
+  const profileForm = document.getElementById('profile-form') as HTMLFormElement;
+  const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement;
+  const mainFormFields = document.getElementById('main-form-fields') as HTMLDivElement;
+  const profileIdInput = document.getElementById('profile-id') as HTMLInputElement;
+  const usernameInput = document.getElementById('username') as HTMLInputElement;
+  const professionInput = document.getElementById('profession') as HTMLSelectElement;
+  const bioInput = document.getElementById('bio') as HTMLTextAreaElement;
+  const contactLinkInput = document.getElementById('contact_link') as HTMLInputElement;
+  const avatarUpload = document.getElementById('avatar-upload') as HTMLInputElement;
+  const profilePictureUrlInput = document.getElementById('profile-picture-url') as HTMLInputElement;
+  const imagePreview = document.getElementById('image-preview') as HTMLImageElement;
+  const profileFormStatus = document.getElementById('form-status') as HTMLDivElement;
+  const profileSubmitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const projectsSection = document.getElementById('projects-section') as HTMLDivElement;
+  const projectsGrid = document.getElementById('projects-grid') as HTMLDivElement;
+  const addProjectBtn = document.getElementById('add-project-btn') as HTMLButtonElement;
+  const projectModal = document.getElementById('project-modal') as HTMLDivElement;
+  const modalTitle = document.getElementById('modal-title') as HTMLHeadingElement;
+  const projectForm = document.getElementById('project-form') as HTMLFormElement;
+  const projectIdInput = document.getElementById('project-id') as HTMLInputElement;
+  const projectImageUrlInput = document.getElementById('project-image-url') as HTMLInputElement;
+  const projectTitleInput = document.getElementById('project-title') as HTMLInputElement;
+  const projectDescriptionInput = document.getElementById('project-description') as HTMLTextAreaElement;
+  const projectImageUpload = document.getElementById('project-image-upload') as HTMLInputElement;
+  const projectImagePreview = document.getElementById('project-image-preview') as HTMLImageElement;
+  const cancelProjectBtn = document.getElementById('cancel-project-btn') as HTMLButtonElement;
+  const saveProjectBtn = document.getElementById('save-project-btn') as HTMLButtonElement;
+  const deleteProjectBtn = document.getElementById('delete-project-btn') as HTMLButtonElement;
+  const modalStatus = document.getElementById('modal-status') as HTMLDivElement;
   
-  // --- Main Initialization ---
+  // --- Initialization ---
   function initializeApp() {
     if (!window.Telegram?.WebApp?.initData) {
-      setTimeout(initializeApp, 50);
-      return;
+      setTimeout(initializeApp, 50); return;
     }
     tg = window.Telegram.WebApp;
     tg.ready();
@@ -125,16 +128,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Data Fetching ---
   async function fetchProfileAndProjects() {
+    if (!pageSubtitle) return;
     pageSubtitle.textContent = "Loading your data...";
     try {
-      // Use the new endpoint to get profile and projects together
       const response = await fetch('/api/profiles/me-with-projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData: tg.initData }),
       });
       if (!response.ok) throw new Error('Could not fetch profile and projects.');
       const data = await response.json();
+      if (!data?.profile) throw new Error('Invalid data from server.');
       userProfile = data.profile;
       
       populateProfileForm();
@@ -144,13 +147,14 @@ document.addEventListener('DOMContentLoaded', () => {
       projectsSection.style.display = 'block';
       pageSubtitle.textContent = 'Update your public information.';
     } catch (err) {
-      pageSubtitle.textContent = `Error: ${err.message}`;
+      pageSubtitle.textContent = `Error: ${(err as Error).message}`;
     }
   }
 
   // --- UI Rendering ---
   function populateProfileForm() {
-    profileIdInput.value = userProfile.id;
+    if (!userProfile) return;
+    profileIdInput.value = userProfile.id.toString();
     usernameInput.value = userProfile.username || '';
     professionInput.value = userProfile.profession || '';
     bioInput.value = userProfile.bio || '';
@@ -160,31 +164,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderProjects() {
-    projectsGrid.innerHTML = ''; // Clear existing projects
-    userProfile.projects.forEach(project => {
+    if (!userProfile) return;
+    projectsGrid.innerHTML = '';
+    userProfile.projects.forEach((project: Project) => {
       const card = document.createElement('div');
       card.className = 'project-card-edit';
-      card.innerHTML = `
-        <img src="${project.image_url || '/default-avatar.png'}" alt="${project.title}" />
-        <div class="project-card-info">
-          <h4>${project.title}</h4>
-        </div>
-      `;
+      card.innerHTML = `<img src="${project.image_url || '/default-avatar.png'}" alt="${project.title}" /><div class="project-card-info"><h4>${project.title}</h4></div>`;
       card.addEventListener('click', () => openProjectModal(project));
       projectsGrid.appendChild(card);
     });
     addProjectBtn.disabled = userProfile.projects.length >= 4;
   }
 
-  function openProjectModal(project = null) {
+  function openProjectModal(project: Project | null = null) {
     projectForm.reset();
     modalStatus.textContent = '';
     projectImagePreview.style.display = 'none';
     projectImagePreview.src = '';
 
-    if (project) { // Editing existing project
+    if (project) { // Editing
       modalTitle.textContent = 'Edit Project';
-      projectIdInput.value = project.id;
+      projectIdInput.value = project.id.toString();
       projectImageUrlInput.value = project.image_url || '';
       projectTitleInput.value = project.title;
       projectDescriptionInput.value = project.description;
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
         projectImagePreview.style.display = 'block';
       }
       deleteProjectBtn.style.display = 'block';
-    } else { // Adding new project
+    } else { // Adding
       modalTitle.textContent = 'Add New Project';
       projectIdInput.value = '';
       projectImageUrlInput.value = '';
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     projectModal.style.display = 'none';
   }
   
-  async function uploadFile(file, endpoint) {
+  async function uploadFile(file: File, endpoint: string): Promise<string> {
     const response = await fetch(endpoint, {
       method: 'POST', body: file, headers: { 'Content-Type': file.type }
     });
@@ -215,11 +215,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // --- Event Handlers ---
-  async function handleProfileUpdate(e) {
+  async function handleProfileUpdate(e: Event) {
     e.preventDefault();
     profileSubmitBtn.disabled = true;
     profileFormStatus.textContent = 'Processing...';
-
     const newImageFile = avatarUpload.files?.[0];
 
     try {
@@ -230,12 +229,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       profileFormStatus.textContent = 'Saving profile changes...';
-      const formData = new FormData(profileForm);
       const updatedData = {
-        username: formData.get('username'),
-        bio: formData.get('bio'),
-        contact_link: formData.get('contact_link'),
-        profession: formData.get('profession'),
+        username: usernameInput.value,
+        bio: bioInput.value,
+        contact_link: contactLinkInput.value,
+        profession: professionInput.value,
         profile_picture_url: profilePictureUrlInput.value,
         initData: tg.initData,
       };
@@ -248,38 +246,39 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await response.json();
         throw new Error(result.error || 'Failed to save changes.');
       }
-
       alert('Profile updated successfully!');
     } catch (err) {
-      alert(`Failed to save profile: ${err.message}`);
+      alert(`Failed to save profile: ${(err as Error).message}`);
     } finally {
       profileSubmitBtn.disabled = false;
       profileFormStatus.textContent = '';
     }
   }
 
-  async function handleProjectSave(e) {
+  async function handleProjectSave(e: Event) {
     e.preventDefault();
     saveProjectBtn.disabled = true;
     modalStatus.textContent = 'Saving...';
     try {
       let imageUrl = projectImageUrlInput.value;
-      const imageFile = projectImageUpload.files[0];
+      const imageFile = projectImageUpload.files?.[0];
       if (imageFile) {
         modalStatus.textContent = 'Uploading project image...';
         imageUrl = await uploadFile(imageFile, '/api/projects/upload');
       }
 
-      if (!imageUrl) {
-        throw new Error('An image is required for a project.');
+      if (!imageUrl && !projectIdInput.value) {
+        throw new Error('An image is required for a new project.');
       }
 
       const isEditing = !!projectIdInput.value;
       const endpoint = isEditing ? '/api/projects/update' : '/api/projects/create';
+      if (!userProfile) throw new Error("User profile not loaded.");
+
       const payload = {
         initData: tg.initData,
         profile_id: userProfile.id,
-        project_id: isEditing ? projectIdInput.value : undefined,
+        project_id: isEditing ? parseInt(projectIdInput.value) : undefined,
         title: projectTitleInput.value,
         description: projectDescriptionInput.value,
         image_url: imageUrl,
@@ -293,11 +292,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await response.json();
         throw new Error(result.error || 'Failed to save project.');
       }
-      
-      await fetchProfileAndProjects(); // Refresh all data
+      await fetchProfileAndProjects();
       closeProjectModal();
     } catch (err) {
-      modalStatus.textContent = `Error: ${err.message}`;
+      modalStatus.textContent = `Error: ${(err as Error).message}`;
     } finally {
       saveProjectBtn.disabled = false;
     }
@@ -310,14 +308,13 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await fetch('/api/projects/delete', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: tg.initData, project_id: projectIdInput.value })
+        body: JSON.stringify({ initData: tg.initData, project_id: parseInt(projectIdInput.value) })
       });
       if (!response.ok) throw new Error('Failed to delete project.');
-
-      await fetchProfileAndProjects(); // Refresh all data
+      await fetchProfileAndProjects();
       closeProjectModal();
     } catch (err) {
-      modalStatus.textContent = `Error: ${err.message}`;
+      modalStatus.textContent = `Error: ${(err as Error).message}`;
     } finally {
       deleteProjectBtn.disabled = false;
     }
@@ -330,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
     projectForm.addEventListener('submit', handleProjectSave);
     deleteProjectBtn.addEventListener('click', handleDeleteProject);
   }
-
+  
   initializeApp();
 });
 </script>
@@ -353,13 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
   .btn-secondary { background-color: var(--secondary-bg-color); color: var(--text-color); border: 1px solid var(--border-color); }
   .btn-danger { background-color: #e53e3e; color: white; }
   #form-status { font-size: 0.9rem; color: var(--hint-color); text-align: center; flex-grow: 1; }
-
-  /* !!! NEW STYLES FOR PROJECTS SECTION AND MODAL !!! */
-  .projects-section {
-    margin-top: 3rem;
-    border-top: 1px solid var(--border-color);
-    padding-top: 2rem;
-  }
+  .projects-section { margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
   .projects-section h2 { font-size: 1.5rem; margin-bottom: 1.5rem; }
   .projects-grid {
     display: grid;
@@ -367,48 +358,41 @@ document.addEventListener('DOMContentLoaded', () => {
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
+  @media (min-width: 768px) {
+    .projects-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
   .project-card-edit {
-    position: relative;
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-    border: 1px solid var(--border-color);
+    position: relative; border-radius: 12px;
+    overflow: hidden; cursor: pointer; border: 1px solid var(--border-color);
+    background-color: var(--secondary-bg-color);
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
   }
   .project-card-edit img {
     width: 100%;
-    height: 50px;
+    height: 100%;
     object-fit: cover;
     display: block;
+    flex-grow: 1;
   }
-  .project-card-info {
+  .project-card-info { 
     padding: 0.75rem;
-    background-color: var(--secondary-bg-color);
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
   }
   .project-card-info h4 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 0.9rem; font-weight: 600; margin: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: white;
   }
-
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0,0,0,0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-  .modal-content {
-    background-color: var(--bg-color);
-    border-radius: 16px;
-    padding: 2rem;
-    width: 90%;
-    max-width: 500px;
-  }
+  .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal-content { background-color: var(--bg-color); border-radius: 16px; padding: 2rem; width: 90%; max-width: 500px; }
   .modal-content h3 { margin-top: 0; }
   #project-form { display: flex; flex-direction: column; gap: 1rem; }
   .modal-actions { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; }
