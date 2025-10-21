@@ -1,7 +1,7 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import { supabase } from '../../lib/supabase';
-import type { Project } from '../../lib/types'; // !!! THE FIX: Import the Project type !!!
+import type { Project } from '../../lib/types'; // <<< THE FIX: Import the Project type
 
 const { id } = Astro.params;
 
@@ -17,6 +17,7 @@ if (error || !profile) {
 ---
 <MainLayout title={`${profile.username} | DivineX`}>
   <div class="profile-detail-page">
+
     <div class="back-link-wrapper">
       <a href="/" class="back-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -44,7 +45,7 @@ if (error || !profile) {
       <h2>My Projects</h2>
       {profile.projects && profile.projects.length > 0 ? (
         <div class="project-grid">
-          {/* !!! THE FIX: Add the type to the map function !!! */}
+          {/* <<< THE FIX: Add the type to the map function parameter */}
           {profile.projects.map((project: Project) => (
             <div class="project-card">
               <img src={project.image_url} alt={project.title} class="project-image" />
