@@ -179,8 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function openProjectModal(project: Project | null = null) {
     projectForm.reset();
     modalStatus.textContent = '';
-    projectImagePreview.style.display = 'none';
-    projectImagePreview.src = '';
+    if(projectImagePreview) projectImagePreview.style.display = 'none';
+    if(projectImagePreview) projectImagePreview.src = '';
 
     if (project) { // Editing
       modalTitle.textContent = 'Edit Project';
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
       projectImageUrlInput.value = project.image_url || '';
       projectTitleInput.value = project.title;
       projectDescriptionInput.value = project.description;
-      if (project.image_url) {
+      if (project.image_url && projectImagePreview) {
         projectImagePreview.src = project.image_url;
         projectImagePreview.style.display = 'block';
       }
@@ -352,45 +352,51 @@ document.addEventListener('DOMContentLoaded', () => {
   #form-status { font-size: 0.9rem; color: var(--hint-color); text-align: center; flex-grow: 1; }
   .projects-section { margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
   .projects-section h2 { font-size: 1.5rem; margin-bottom: 1.5rem; }
+  
+  /* !!! RESPONSIVE GRID AND SIZE FIX !!! */
   .projects-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr); /* 2 columns on mobile */
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
-  @media (min-width: 50px) {
+  @media (min-width: 768px) {
     .projects-grid {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, 1fr); /* 4 columns on desktop */
     }
   }
+
   .project-card-edit {
-    position: relative; border-radius: 12px;
-    overflow: hidden; cursor: pointer; border: 1px solid var(--border-color);
     background-color: var(--secondary-bg-color);
-    aspect-ratio: 1 / 1;
-    display: flex;
-    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s ease-in-out;
+  }
+  .project-card-edit:hover {
+    transform: translateY(-3px);
   }
   .project-card-edit img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
     display: block;
-    flex-grow: 1;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background-color: var(--border-color);
   }
-  .project-card-info { 
-    padding: 0.75rem;
-    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+  .project-card-info {
+    padding: 0.75rem 1rem;
   }
   .project-card-info h4 {
-    font-size: 0.9rem; font-weight: 600; margin: 0;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-color);
   }
+
   .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
   .modal-content { background-color: var(--bg-color); border-radius: 16px; padding: 2rem; width: 90%; max-width: 500px; }
   .modal-content h3 { margin-top: 0; }
