@@ -34,7 +34,6 @@ import MainLayout from '../../layouts/MainLayout.astro';
       </form>
     </section>
     <section class="form-section" id="projects-section" style="display: none;">
-      <div class="wrapper">
       <h2>Manage Your Projects</h2>
       <div id="project-list" class="project-list"></div>
       </div>
@@ -278,13 +277,9 @@ import MainLayout from '../../layouts/MainLayout.astro';
   #profile-form-status, #project-form-status { font-size: 0.9rem; color: var(--hint-color); text-align: right; flex-grow: 1; }
   .hint-text { color: var(--hint-color); text-align: center; font-style: italic; }
   /* --- NEW & IMPROVED STYLES FOR PROJECT MANAGEMENT --- */
-.wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  border: 1px solid black; 
-}
 
 .project-list { 
+  object-fit : contain;
   display: grid;
   /* 1 column on small screens */
   grid-template-columns: 1fr;
@@ -309,12 +304,12 @@ import MainLayout from '../../layouts/MainLayout.astro';
 }
   
 .project-item-image { 
+  object-fit : contain;
   max-width: 100%;
   height: auto;
   display: block;
   /* Use aspect-ratio for a consistent shape */
   aspect-ratio: 16 / 9;
-  object-fit: cover;
   flex-shrink: 0;
   border-bottom: 5px solid var(--border-color);
 }
