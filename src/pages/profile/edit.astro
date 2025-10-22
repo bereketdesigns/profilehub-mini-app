@@ -34,13 +34,9 @@ import MainLayout from '../../layouts/MainLayout.astro';
     </section>
     
     <section class="form-section" id="projects-section" style="display: none;">
-      <div class="project-card-component">
-        <img src={project.image_url} alt={project.title} class="project-card-image" />
-        <div class="project-card-info">
-       <h3 class="project-card-title">{project.title}</h3>
-       {project.description && <p class="project-card-description">{project.description}</p>}
-        </div>
-
+      <h2>Manage Projects</h2>
+      <div id="project-list" class="project-grid"></div>
+      <div id="add-project-container">
         <h3>Add New Project</h3>
         <form id="add-project-form" class="profile-form">
           <label>Project Title <input type="text" name="title" required /></label>
@@ -290,35 +286,56 @@ import MainLayout from '../../layouts/MainLayout.astro';
   #profile-form-status, #project-form-status { font-size: 0.9rem; color: var(--hint-color); text-align: right; flex-grow: 1; }
   .hint-text { color: var(--hint-color); text-align: center; font-style: italic; }
 
-  .project-card-component {
+  /* --- DEFINITIVE PROJECT MANAGEMENT STYLES (COPIED FROM [id].astro) --- */
+  .project-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  @media (min-width: 600px) {
+    .project-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .project-card {
     background-color: var(--secondary-bg-color);
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--border-color);
-    height: 100%; /* Ensure cards in a grid have the same height */
     display: flex;
     flex-direction: column;
   }
-  .project-card-image {
+  
+  .project-image {
     width: 100%;
     height: 250px;
     object-fit: cover;
   }
-  .project-card-info {
+  
+  .project-info {
     padding: 1.25rem;
-    flex-grow: 1; /* Allows info section to fill space */
+    flex-grow: 1; /* This is key to push the delete button to the bottom */
   }
-  .project-card-title {
+  
+  .project-title {
     font-size: 1.25rem;
     font-weight: 600;
     margin: 0 0 0.5rem;
-    color: var(--text-color);
   }
-  .project-card-description {
+
+  .project-description {
     font-size: 0.95rem;
     color: var(--hint-color);
     line-height: 1.6;
     margin: 0;
+  }
+  
+  /* New styles specific to the management card's delete button */
+  .project-actions { 
+    padding: 0 1.25rem 1.25rem;
+    /* Removed margin-top, flex-grow on .project-info handles spacing */
   }
 
   .btn-delete { 
