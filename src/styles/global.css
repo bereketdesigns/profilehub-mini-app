@@ -59,6 +59,7 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.2s, color 0.2s;
+  padding-bottom: 100px; /* This is the new line */
 }
 .container {
   max-width: 1200px;
