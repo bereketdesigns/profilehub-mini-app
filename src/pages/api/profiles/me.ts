@@ -15,18 +15,22 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ status: 'unauthorized' }), { status: 401 });
     }
 
+    // --- THIS IS THE DEFINITIVE FIX ---
+    // The query now correctly joins and fetches the related projects.
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select(`
+        *,
+        projects ( * )
+      `)
       .eq('telegram_id', user.id)
       .single();
 
     if (error || !profile) {
-      // It's not an error if the profile isn't found, it just means they're a new user.
       return new Response(JSON.stringify({ status: 'not_found' }), { status: 404 });
     }
 
-    // Success! Return the found profile.
+    // Success! Return the profile, which now includes the 'projects' array.
     return new Response(JSON.stringify({ status: 'found', profile }), { status: 200 });
 
   } catch (err) {
