@@ -279,12 +279,56 @@ import MainLayout from '../../layouts/MainLayout.astro';
   .btn-secondary { background-color: var(--secondary-bg-color); color: var(--text-color); border: 1px solid var(--border-color); }
   #profile-form-status, #project-form-status { font-size: 0.9rem; color: var(--hint-color); text-align: right; flex-grow: 1; }
   .hint-text { color: var(--hint-color); text-align: center; font-style: italic; }
-  .project-list { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2rem; }
-  @media (min-width: 600px) { .project-list { grid-template-columns: repeat(2, 1fr); } }
-  .project-item { background-color: var(--bg-color); border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; }
-  .project-item-image { width: 50%; height: 150px; object-fit: cover; border-top-left-radius: 12px; border-top-right-radius: 12px; }
-  .project-item-info { padding: 1rem; flex-grow: 1; }
-  .project-item-title { font-weight: 600; margin: 0; }
-  .project-item-actions { padding: 0 1rem 1rem; }
-  .btn-delete { background: #ff4d4d; color: white; border: none; width: 100%; padding: 0.5rem; border-radius: 8px; cursor: pointer; font-weight: 500; }
+
+  /* --- NEW STYLES FOR PROJECT MANAGEMENT --- */
+
+  .project-list { 
+    display: flex; /* Changed from grid to flex */
+    flex-direction: column; /* Stack items vertically */
+    gap: 1rem; 
+    margin-bottom: 2rem; 
+  }
+  
+  .project-item {
+    background-color: var(--bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: flex; /* Use flexbox for horizontal layout */
+    align-items: center; /* Vertically center items */
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+  
+  .project-item-image { 
+    width: 50px; /* Small thumbnail width */
+    height: 50px; /* Small thumbnail height */
+    object-fit: cover;
+    border-radius: 8px; /* Slightly rounded corners */
+    flex-shrink: 0; /* Prevent image from shrinking */
+  }
+
+  .project-item-info {
+    padding: 0; /* Remove old padding */
+    flex-grow: 1; /* Allow title to take up available space */
+  }
+
+  .project-item-title { 
+    font-weight: 600; 
+    margin: 0; 
+  }
+
+  .project-item-actions { 
+    padding: 0; /* Remove old padding */
+    margin-left: auto; /* Push delete button to the far right */
+  }
+
+  .btn-delete { 
+    background: #ff4d4d; 
+    color: white; 
+    border: none;
+    padding: 0.6rem 1rem; /* Adjust padding */
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-weight: 500;
+  }
 </style>
