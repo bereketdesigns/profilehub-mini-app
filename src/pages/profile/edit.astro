@@ -313,7 +313,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
   /* Container using padding-top hack for aspect ratio */
   .project-image-container {
     position: relative;
-    width: 50px;
+    width: auto;
     padding-top: 56.25%; /* 16:9 Aspect Ratio */
     background-color: var(--secondary-bg-color);
     overflow: hidden;
@@ -324,8 +324,8 @@ import MainLayout from '../../layouts/MainLayout.astro';
     overflow: hidden;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: auto;
+    height: auto;
     object-fit: cover;
   }
 
