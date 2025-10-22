@@ -285,11 +285,10 @@ import MainLayout from '../../layouts/MainLayout.astro';
   margin-bottom: 2rem; 
 }
 
-/* 2 columns on screens wider than 600px */
-@media (min-width: 600px) {
-  .project-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
+@media (max-width: 480px) {
+	.doc-patient {
+		width: 100% !important;
+	}
 }
   
 .project-item {
