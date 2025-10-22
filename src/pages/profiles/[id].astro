@@ -1,7 +1,7 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import { supabase } from '../../lib/supabase';
-import type { Project } from '../../lib/types'; // <<< THE FIX: Import the Project type
+import ProjectCard from '../../components/ProjectCard.astro'; // <-- Import the new component
 
 const { id } = Astro.params;
 
@@ -17,7 +17,6 @@ if (error || !profile) {
 ---
 <MainLayout title={`${profile.username} | DivineX`}>
   <div class="profile-detail-page">
-
     <div class="back-link-wrapper">
       <a href="/" class="back-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -45,15 +44,9 @@ if (error || !profile) {
       <h2>My Projects</h2>
       {profile.projects && profile.projects.length > 0 ? (
         <div class="project-grid">
-          {/* <<< THE FIX: Add the type to the map function parameter */}
-          {profile.projects.map((project: Project) => (
-            <div class="project-card">
-              <img src={project.image_url} alt={project.title} class="project-image" />
-              <div class="project-info">
-                <h3 class="project-title">{project.title}</h3>
-                <p class="project-description">{project.description}</p>
-              </div>
-            </div>
+          {profile.projects.map(project => (
+            <!-- Use the new component, passing the project data to it -->
+            <ProjectCard {project} />
           ))}
         </div>
       ) : (
@@ -62,8 +55,8 @@ if (error || !profile) {
     </section>
   </div>
 </MainLayout>
-
 <style>
+  /* All the specific project card styles have been REMOVED from this file */
   .back-link-wrapper { margin-bottom: 2rem; }
   .back-link { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500; color: var(--hint-color); text-decoration: none; transition: color 0.2s; }
   .back-link:hover { color: var(--link-color); }
@@ -81,10 +74,5 @@ if (error || !profile) {
   .project-gallery { border-top: 1px solid var(--border-color); padding-top: 2rem; }
   .project-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
   @media (min-width: 768px) { .project-grid { grid-template-columns: repeat(2, 1fr); } }
-  .project-card { background-color: var(--secondary-bg-color); border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); }
-  .project-image { width: 100%; height: 250px; object-fit: cover; }
-  .project-info { padding: 1.25rem; }
-  .project-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem; }
-  .project-description { font-size: 0.95rem; color: var(--hint-color); line-height: 1.6; margin: 0; }
   .no-projects-message { color: var(--hint-color); }
 </style>

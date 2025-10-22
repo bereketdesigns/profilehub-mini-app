@@ -34,14 +34,23 @@ import MainLayout from '../../layouts/MainLayout.astro';
       </form>
     </section>
     
-    <!-- Part 2: Manage Projects -->
+    <!-- Part 2: Manage Projects (Self-contained on this page) -->
     <section class="form-section" id="projects-section" style="display: none;">
-      <div class="section-header">
-        <h2>Manage Projects</h2>
-        <a href="/profile/projects/new" class="btn btn-primary" id="add-project-link" style="display: none;">+ Add Project</a>
-      </div>
+      <h2>Manage Projects</h2>
       <div id="project-list" class="project-list">
-        <!-- JS will render project cards here -->
+        <!-- JS will render existing project items here -->
+      </div>
+      <div id="add-project-container">
+        <h3>Add New Project</h3>
+        <form id="add-project-form" class="profile-form">
+          <label>Project Title <input type="text" name="title" required /></label>
+          <label>Project Description <textarea name="description" rows="3"></textarea></label>
+          <label>Project Image <input type="file" name="image" accept="image/*" required /></label>
+          <div class="form-actions">
+            <button type="submit" id="add-project-btn" class="btn btn-primary">Add Project</button>
+          </div>
+          <div id="project-form-status"></div>
+        </form>
       </div>
     </section>
   </div>
@@ -54,6 +63,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
   };
   
   document.addEventListener('DOMContentLoaded', () => {
+    let userProfile: ProfileWithProjects | null = null;
     const tg = window.Telegram?.WebApp;
     const pageSubtitle = document.getElementById('page-subtitle') as HTMLParagraphElement;
     if (!tg?.initData) {
@@ -62,20 +72,59 @@ import MainLayout from '../../layouts/MainLayout.astro';
     }
     tg.ready();
 
-    // --- Element Selectors ---
     const profileForm = document.getElementById('profile-form') as HTMLFormElement;
     const submitProfileBtn = document.getElementById('submit-profile-btn') as HTMLButtonElement;
     const profileFormStatus = document.getElementById('profile-form-status') as HTMLDivElement;
     const projectsSection = document.getElementById('projects-section') as HTMLElement;
     const projectList = document.getElementById('project-list') as HTMLDivElement;
-    const addProjectLink = document.getElementById('add-project-link') as HTMLAnchorElement;
+    const addProjectForm = document.getElementById('add-project-form') as HTMLFormElement;
+    const addProjectContainer = document.getElementById('add-project-container') as HTMLElement;
+    const addProjectBtn = document.getElementById('add-project-btn') as HTMLButtonElement;
+    const projectFormStatus = document.getElementById('project-form-status') as HTMLDivElement;
 
     async function uploadFile(file: File, bucket: 'profile-pictures' | 'project-images'): Promise<string> {
-      // Logic for this is unchanged and correct
+      const response = await fetch('/api/profiles/upload', {
+        method: 'POST', body: file, headers: { 'Content-Type': file.type, 'X-Bucket': bucket }
+      });
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Upload failed');
+      }
+      return (await response.json()).url;
     }
 
-    // --- Fetch and Render Logic ---
-    async function fetchAndRender() {
+    function renderProjects() {
+      if (!projectList || !addProjectContainer) return;
+      projectList.innerHTML = '';
+      const projects = userProfile?.projects;
+
+      if (!projects || projects.length === 0) {
+        projectList.innerHTML = '<p class="hint-text">You have no projects yet. Add one below!</p>';
+      } else {
+        projects.forEach((p: Project) => {
+          const projectEl = document.createElement('div');
+          projectEl.className = 'project-item';
+          projectEl.innerHTML = `
+            <img src="${p.image_url}" alt="${p.title}" class="project-item-image" />
+            <div class="project-item-info"><p class="project-item-title">${p.title}</p></div>
+            <div class="project-item-actions"><button class="btn-delete" data-id="${p.id}">Delete</button></div>
+          `;
+          projectList.appendChild(projectEl);
+        });
+      }
+      
+      if (projects && projects.length >= 4) {
+        addProjectContainer.style.display = 'none';
+        const limitReached = document.createElement('p');
+        limitReached.className = 'hint-text';
+        limitReached.textContent = 'You have reached the 4 project limit.';
+        projectList.appendChild(limitReached);
+      } else {
+        addProjectContainer.style.display = 'block';
+      }
+    }
+
+    async function fetchProfileData() {
       if (pageSubtitle) pageSubtitle.textContent = "Loading your data...";
       try {
         const response = await fetch('/api/profiles/me', {
@@ -84,10 +133,15 @@ import MainLayout from '../../layouts/MainLayout.astro';
         });
         if (!response.ok) throw new Error('Could not fetch your profile.');
         const data = await response.json();
-        const userProfile: ProfileWithProjects | null = data?.profile;
-        if (!userProfile) throw new Error('Invalid data received.');
+        if (!data?.profile) throw new Error('Invalid data received.');
+        
+        userProfile = data.profile;
+        
+        if (userProfile && !userProfile.projects) {
+            userProfile.projects = [];
+        }
+        if (!userProfile) { throw new Error('Profile data is missing after fetch.'); }
 
-        // Populate Profile Form
         (document.getElementById('username') as HTMLInputElement).value = userProfile.username || '';
         (document.getElementById('bio') as HTMLTextAreaElement).value = userProfile.bio || '';
         (document.getElementById('contact_link') as HTMLInputElement).value = userProfile.contact_link || '';
@@ -95,42 +149,17 @@ import MainLayout from '../../layouts/MainLayout.astro';
         (document.getElementById('profile-picture-url') as HTMLInputElement).value = userProfile.profile_picture_url || '';
         (document.getElementById('image-preview') as HTMLImageElement).src = userProfile.profile_picture_url || '/default-avatar.png';
         
-        // Render Projects
-        projectList.innerHTML = '';
-        const projects = userProfile.projects || [];
-        if (projects.length === 0) {
-          projectList.innerHTML = '<p class="hint-text">You have no projects yet. Click "+ Add Project" to start.</p>';
-        } else {
-          projects.forEach((p: Project) => {
-            const projectLink = document.createElement('a');
-            projectLink.className = 'project-item-link';
-            projectLink.href = `/profile/projects/${p.id}/edit`;
-            projectLink.innerHTML = `
-              <div class="project-item">
-                <img src="${p.image_url}" alt="${p.title}" class="project-item-image" />
-                <div class="project-item-info">
-                  <h3 class="project-item-title">${p.title}</h3>
-                </div>
-              </div>
-            `;
-            projectList.appendChild(projectLink);
-          });
-        }
-        
-        // Show/Hide Add Project button based on project count
-        addProjectLink.style.display = projects.length < 4 ? 'inline-flex' : 'none';
-
-        // Show all sections now that data is loaded
-        profileForm.style.display = 'flex';
-        projectsSection.style.display = 'block';
+        if (profileForm) profileForm.style.display = 'flex';
+        if (projectsSection) projectsSection.style.display = 'block';
         if (pageSubtitle) pageSubtitle.textContent = 'Update your public information.';
+        
+        renderProjects();
       } catch (err) {
         if (pageSubtitle) pageSubtitle.textContent = `Error: ${(err as Error).message}`;
       }
     }
 
-    // --- Profile Form Submission Logic ---
-    profileForm.addEventListener('submit', async (e: Event) => {
+    if (profileForm) profileForm.addEventListener('submit', async (e: Event) => {
       e.preventDefault();
       if (!submitProfileBtn || !profileFormStatus) return;
       submitProfileBtn.disabled = true;
@@ -160,42 +189,144 @@ import MainLayout from '../../layouts/MainLayout.astro';
         });
         if (!response.ok) throw new Error('Failed to save profile changes.');
         alert('Profile updated successfully!');
-        // No need to close, user might want to manage projects
+        tg.close();
       } catch (err) {
         alert(`Error: ${(err as Error).message}`);
-      } finally {
         submitProfileBtn.disabled = false;
         profileFormStatus.textContent = '';
       }
     });
 
-    fetchAndRender(); // Initial call to load everything
+    if (addProjectForm) addProjectForm.addEventListener('submit', async (e: Event) => {
+      e.preventDefault();
+      if (!addProjectBtn || !projectFormStatus) return;
+
+      addProjectBtn.disabled = true;
+      projectFormStatus.textContent = 'Uploading project image...';
+      const form = e.target as HTMLFormElement;
+      const title = (form.elements.namedItem('title') as HTMLInputElement).value;
+      const description = (form.elements.namedItem('description') as HTMLTextAreaElement).value;
+      const imageFile = (form.elements.namedItem('image') as HTMLInputElement).files?.[0];
+
+      if (!imageFile || !userProfile) return;
+
+      try {
+        const imageUrl = await uploadFile(imageFile, 'project-images');
+        projectFormStatus.textContent = 'Adding project...';
+
+        const response = await fetch('/api/projects/create', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            initData: tg.initData, profile_id: userProfile.id,
+            title, description, image_url: imageUrl,
+          }),
+        });
+        if (!response.ok) throw new Error('Failed to add project.');
+        
+        const newProject = await response.json();
+        userProfile.projects.push(newProject);
+        renderProjects();
+        form.reset();
+      } catch (err) {
+        alert(`Error: ${(err as Error).message}`);
+      } finally {
+        addProjectBtn.disabled = false;
+        projectFormStatus.textContent = '';
+      }
+    });
+
+    if (projectList) projectList.addEventListener('click', async (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('btn-delete')) {
+        const projectId = target.dataset.id;
+        if (confirm('Are you sure you want to delete this project?')) {
+          (target as HTMLButtonElement).disabled = true;
+          try {
+            const response = await fetch('/api/projects/delete', {
+              method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ initData: tg.initData, project_id: projectId }),
+            });
+            if (!response.ok) throw new Error('Failed to delete project.');
+            
+            if (userProfile && userProfile.projects) {
+              userProfile.projects = userProfile.projects.filter(p => p.id.toString() !== projectId);
+            }
+            renderProjects();
+          } catch (err) {
+            alert(`Error: ${(err as Error).message}`);
+            (target as HTMLButtonElement).disabled = false;
+          }
+        }
+      }
+    });
+    
+    fetchProfileData();
   });
 </script>
 <style>
   .profile-page { display: flex; flex-direction: column; gap: 3rem; }
   .form-section { border-top: 1px solid var(--border-color); padding-top: 2rem; }
   .form-section:first-child { border-top: none; padding-top: 0; }
-  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-  .section-header h2 { margin: 0; }
   .profile-form { display: flex; flex-direction: column; gap: 1rem; background-color: var(--secondary-bg-color); padding: 1.5rem; border-radius: 16px; margin-top: 1rem; }
   .profile-form label { font-weight: 500; display: flex; flex-direction: column; gap: 0.25rem; }
   .profile-form input, .profile-form textarea, .profile-form select { width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color); }
   .image-preview-wrapper { display: flex; align-items: center; gap: 1rem; font-size: 0.9em; color: var(--hint-color); }
   .image-preview { height: 50px; width: 50px; border-radius: 8px; object-fit: cover; }
   .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1rem; }
-  .btn { display: inline-flex; align-items: center; padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; }
+  .btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; }
   .btn-primary { background-color: var(--accent-color); color: var(--button-text-color); }
   .btn-secondary { background-color: var(--secondary-bg-color); color: var(--text-color); border: 1px solid var(--border-color); }
-  #profile-form-status { font-size: 0.9rem; color: var(--hint-color); text-align: right; flex-grow: 1; }
-  .hint-text { color: var(--hint-color); text-align: center; font-style: italic; padding: 1rem; }
+  #profile-form-status, #project-form-status { font-size: 0.9rem; color: var(--hint-color); text-align: right; flex-grow: 1; }
+  .hint-text { color: var(--hint-color); text-align: center; font-style: italic; }
 
-  .project-list { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-  @media (min-width: 600px) { .project-list { grid-template-columns: repeat(2, 1fr); } }
-  .project-item-link { text-decoration: none; color: inherit; display: block; transition: transform 0.2s; }
-  .project-item-link:hover { transform: translateY(-4px); }
-  .project-item { background-color: var(--bg-color); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; }
-  .project-item-image { width: 100%; height: 180px; object-fit: cover; }
-  .project-item-info { padding: 1rem; }
-  .project-item-title { font-size: 1.1rem; font-weight: 600; margin: 0; }
+  .project-list { 
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; 
+    margin-bottom: 2rem; 
+  }
+  
+  .project-item {
+    background-color: var(--bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+  
+  .project-item-image { 
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .project-item-info {
+    padding: 0;
+    flex-grow: 1;
+    text-align: left;
+  }
+
+  .project-item-title { 
+    font-weight: 600; 
+    margin: 0; 
+  }
+
+  .project-item-actions { 
+    padding: 0;
+    margin-left: auto;
+  }
+
+  .btn-delete { 
+    background: #ff4d4d; 
+    color: white; 
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-weight: 500;
+  }
 </style>
