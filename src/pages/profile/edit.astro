@@ -135,7 +135,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
 
         // THE FIX: Ensure userProfile.projects is always an array.
         if (userProfile && !userProfile.projects) {
-             userProfile.projects= [];
+             userProfile.projects = [];
         }
 
         if (!userProfile) { // This check solves the TypeScript errors
@@ -282,7 +282,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
   .project-list { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2rem; }
   @media (min-width: 600px) { .project-list { grid-template-columns: repeat(2, 1fr); } }
   .project-item { background-color: var(--bg-color); border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; }
-  .project-item-image { width: 100%; height: 150px; object-fit: cover; border-top-left-radius: 12px; border-top-right-radius: 12px; }
+  .project-item-image { width: 50%; height: 150px; object-fit: cover; border-top-left-radius: 12px; border-top-right-radius: 12px; }
   .project-item-info { padding: 1rem; flex-grow: 1; }
   .project-item-title { font-weight: 600; margin: 0; }
   .project-item-actions { padding: 0 1rem 1rem; }
