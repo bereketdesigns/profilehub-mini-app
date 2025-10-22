@@ -1,26 +1,25 @@
-// This file defines the "shape" of our data objects for use with TypeScript.
+// This file will store all the custom data types for our application.
 
-// Defines a single portfolio project item.
+// Defines the structure of a single portfolio project.
 export interface Project {
   id: number;
+  created_at: string;
   profile_id: number;
   title: string;
   description: string;
   image_url: string;
   display_order: number;
-  created_at: string;
 }
 
-// Defines a user profile.
-// It now includes an array of its associated projects.
+// Defines the structure of a user profile, including an array of their projects.
 export interface Profile {
   id: number;
+  created_at: string;
   telegram_id: number;
   username: string;
   bio: string;
   profile_picture_url: string;
-  contact_link?: string; // Optional field
-  profession?: string;   // Optional field
-  created_at: string;
-  projects: Project[]; // A profile contains an array of its projects
+  contact_link: string | null;
+  profession: string | null;
+  projects: Project[]; // A profile can have an array of Project objects
 }

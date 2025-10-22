@@ -1,62 +1,86 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import { supabase } from '../../lib/supabase';
-import ProjectCard from '../../components/ProjectCard.astro'; // <-- Import the new component
+import type { Profile } from '../../lib/types';
 
 const { id } = Astro.params;
 
-const { data: profile, error } = await supabase
+// Fetch the data first
+const { data, error } = await supabase
   .from('profiles')
-  .select(`*, projects ( * )`)
+  .select(`*, projects (*)`)
   .eq('id', id)
   .single();
 
-if (error || !profile) {
+// !!! THIS IS THE DEFINITIVE FIX !!!
+// We explicitly cast the 'data' to our 'Profile' type AFTER it's fetched.
+// This is the most robust way to inform TypeScript of the data's shape.
+const profile = data as Profile | null;
+
+// The rest of the frontmatter is now simpler
+if (error) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 ---
-<MainLayout title={`${profile.username} | DivineX`}>
-  <div class="profile-detail-page">
-    <div class="back-link-wrapper">
+<MainLayout title={profile ? `${profile.username} | DivineX` : 'Profile Not Found'}>
+  {profile ? (
+    <div class="profile-detail-page">
+      <div class="back-link-wrapper">
+        <a href="/" class="back-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
+          <span>All Profiles</span>
+        </a>
+      </div>
+
+      <header class="profile-header">
+        <img src={profile.profile_picture_url || '/default-avatar.png'} alt={profile.username} class="profile-header-avatar" />
+        <div class="profile-header-info">
+          <h1 class="profile-header-username">{profile.username}</h1>
+          {profile.profession && <p class="profile-header-profession">{profile.profession}</p>}
+          {profile.contact_link && (
+            <a href={profile.contact_link} class="contact-button" target="_blank" rel="noopener noreferrer">Contact</a>
+          )}
+        </div>
+      </header>
+
+      <section class="profile-bio-full">
+        <h2>About Me</h2>
+        <p>{profile.bio || 'No bio provided.'}</p>
+      </section>
+
+      <section class="project-gallery">
+        <h2>My Projects</h2>
+        {profile.projects && profile.projects.length > 0 ? (
+          <div class="project-grid">
+            {profile.projects.map(project => (
+              <div class="project-card">
+                <img src={project.image_url} alt={project.title} class="project-image" />
+                <div class="project-info">
+                  <h3 class="project-title">{project.title}</h3>
+                  <p class="project-description">{project.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p class="no-projects-message">This user hasn't added any projects yet.</p>
+        )}
+      </section>
+    </div>
+  ) : (
+    <div class="not-found-container">
+      <h1>404 - Profile Not Found</h1>
+      <p>The profile you are looking for does not exist.</p>
       <a href="/" class="back-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
-        <span>All Profiles</span>
+        <span>Go back to All Profiles</span>
       </a>
     </div>
-
-    <header class="profile-header">
-      <img src={profile.profile_picture_url || '/default-avatar.png'} alt={profile.username} class="profile-header-avatar" />
-      <div class="profile-header-info">
-        <h1 class="profile-header-username">{profile.username}</h1>
-        {profile.profession && <p class="profile-header-profession">{profile.profession}</p>}
-        {profile.contact_link && (
-          <a href={profile.contact_link} class="contact-button" target="_blank" rel="noopener noreferrer">Contact</a>
-        )}
-      </div>
-    </header>
-
-    <section class="profile-bio-full">
-      <h2>About Me</h2>
-      <p>{profile.bio || 'No bio provided.'}</p>
-    </section>
-
-    <section class="project-gallery">
-      <h2>My Projects</h2>
-      {profile.projects && profile.projects.length > 0 ? (
-        <div class="project-grid">
-          {profile.projects.map(project => (
-            <!-- Use the new component, passing the project data to it -->
-            <ProjectCard {project} />
-          ))}
-        </div>
-      ) : (
-        <p class="no-projects-message">This user hasn't added any projects yet.</p>
-      )}
-    </section>
-  </div>
+  )}
 </MainLayout>
+
 <style>
-  /* All the specific project card styles have been REMOVED from this file */
+  /* All styles are unchanged and correct */
   .back-link-wrapper { margin-bottom: 2rem; }
   .back-link { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500; color: var(--hint-color); text-decoration: none; transition: color 0.2s; }
   .back-link:hover { color: var(--link-color); }
@@ -74,5 +98,11 @@ if (error || !profile) {
   .project-gallery { border-top: 1px solid var(--border-color); padding-top: 2rem; }
   .project-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
   @media (min-width: 768px) { .project-grid { grid-template-columns: repeat(2, 1fr); } }
+  .project-card { background-color: var(--secondary-bg-color); border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); }
+  .project-image { width: 100%; height: 250px; object-fit: cover; }
+  .project-info { padding: 1.25rem; }
+  .project-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem; }
+  .project-description { font-size: 0.95rem; color: var(--hint-color); line-height: 1.6; margin: 0; }
   .no-projects-message { color: var(--hint-color); }
+  .not-found-container { text-align: center; padding: 4rem 1rem; }
 </style>
