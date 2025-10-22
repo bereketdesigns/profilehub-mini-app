@@ -1,5 +1,8 @@
 /* --- PALETTE: DIVINEX TECH (BLUE, ORANGE, SILVER) --- */
-
+/* Add this to your global.css */
+html, body {
+  overflow-x: hidden;
+}
 /* This is the Light Mode theme (the default) */
 :root {
   /* Main Palette */
