@@ -276,6 +276,9 @@ import MainLayout from '../../layouts/MainLayout.astro';
   #profile-form-status, #project-form-status { font-size: 0.9rem; color: var(--hint-color); text-align: right; flex-grow: 1; }
   .hint-text { color: var(--hint-color); text-align: center; font-style: italic; }
   /* --- NEW & IMPROVED STYLES FOR PROJECT MANAGEMENT --- */
+.add-project-container {
+  max-width= 50%;
+}
 
 .project-list { 
   display: grid;
@@ -285,10 +288,11 @@ import MainLayout from '../../layouts/MainLayout.astro';
   margin-bottom: 2rem; 
 }
 
-@media (max-width: 480px) {
-	.doc-patient {
-		width: 100% !important;
-	}
+/* 2 columns on screens wider than 600px */
+@media (min-width: 600px) {
+  .project-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
   
 .project-item {
