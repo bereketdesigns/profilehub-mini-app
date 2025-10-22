@@ -132,15 +132,11 @@ import MainLayout from '../../layouts/MainLayout.astro';
         if (!data?.profile) throw new Error('Invalid data received.');
         
         userProfile = data.profile;
-
-        // THE FIX: Ensure userProfile.projects is always an array.
+        
         if (userProfile && !userProfile.projects) {
-             userProfile.projects = [];
+            userProfile.projects = [];
         }
-
-        if (!userProfile) { // This check solves the TypeScript errors
-          throw new Error('Profile data is missing after fetch.');
-        }
+        if (!userProfile) { throw new Error('Profile data is missing after fetch.'); }
 
         (document.getElementById('profile-id') as HTMLInputElement).value = userProfile.id.toString();
         (document.getElementById('username') as HTMLInputElement).value = userProfile.username || '';
@@ -280,11 +276,9 @@ import MainLayout from '../../layouts/MainLayout.astro';
   #profile-form-status, #project-form-status { font-size: 0.9rem; color: var(--hint-color); text-align: right; flex-grow: 1; }
   .hint-text { color: var(--hint-color); text-align: center; font-style: italic; }
 
-  /* --- NEW STYLES FOR PROJECT MANAGEMENT --- */
-
   .project-list { 
-    display: flex; /* Changed from grid to flex */
-    flex-direction: column; /* Stack items vertically */
+    display: flex;
+    flex-direction: column;
     gap: 1rem; 
     margin-bottom: 2rem; 
   }
@@ -293,23 +287,24 @@ import MainLayout from '../../layouts/MainLayout.astro';
     background-color: var(--bg-color);
     border-radius: 12px;
     border: 1px solid var(--border-color);
-    display: flex; /* Use flexbox for horizontal layout */
-    align-items: center; /* Vertically center items */
+    display: flex;
+    align-items: center;
     padding: 0.75rem;
     gap: 1rem;
   }
   
   .project-item-image { 
-    width: 50px; /* Small thumbnail width */
-    height: 50px; /* Small thumbnail height */
+    width: 50px;
+    height: 50px;
     object-fit: cover;
-    border-radius: 8px; /* Slightly rounded corners */
-    flex-shrink: 0; /* Prevent image from shrinking */
+    border-radius: 8px;
+    flex-shrink: 0;
   }
 
   .project-item-info {
-    padding: 0; /* Remove old padding */
-    flex-grow: 1; /* Allow title to take up available space */
+    padding: 0;
+    flex-grow: 1;
+    text-align: left;
   }
 
   .project-item-title { 
@@ -318,15 +313,15 @@ import MainLayout from '../../layouts/MainLayout.astro';
   }
 
   .project-item-actions { 
-    padding: 0; /* Remove old padding */
-    margin-left: auto; /* Push delete button to the far right */
+    padding: 0;
+    margin-left: auto;
   }
 
   .btn-delete { 
     background: #ff4d4d; 
     color: white; 
     border: none;
-    padding: 0.6rem 1rem; /* Adjust padding */
+    padding: 0.6rem 1rem;
     border-radius: 8px; 
     cursor: pointer; 
     font-weight: 500;
