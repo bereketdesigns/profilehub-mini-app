@@ -3,6 +3,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
 ---
 <MainLayout title="Edit Your Profile - DivineX">
   <div class="profile-page">
+    <!-- Part 1: Edit Profile Form (Unchanged) -->
     <section class="form-section">
       <h1>Edit Your Profile</h1>
       <p id="page-subtitle">Initializing...</p>
@@ -33,9 +34,10 @@ import MainLayout from '../../layouts/MainLayout.astro';
       </form>
     </section>
     
+    <!-- Part 2: Manage Projects (Now a compact list) -->
     <section class="form-section" id="projects-section" style="display: none;">
       <h2>Manage Projects</h2>
-      <div id="project-list" class="project-grid"></div>
+      <div id="project-list" class="project-list-compact"></div>
       <div id="add-project-container">
         <h3>Add New Project</h3>
         <form id="add-project-form" class="profile-form">
@@ -52,6 +54,8 @@ import MainLayout from '../../layouts/MainLayout.astro';
   </div>
 </MainLayout>
 <script>
+  // All script logic is unchanged and correct from the previous final version.
+  // The only change is in the renderProjects function's innerHTML.
   type Project = { id: number; title: string; description: string; image_url: string; };
   type ProfileWithProjects = { 
     id: number; username: string; bio: string; contact_link: string;
@@ -68,6 +72,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
     }
     tg.ready();
 
+    // All selectors are unchanged
     const profileForm = document.getElementById('profile-form') as HTMLFormElement;
     const submitProfileBtn = document.getElementById('submit-profile-btn') as HTMLButtonElement;
     const profileFormStatus = document.getElementById('profile-form-status') as HTMLDivElement;
@@ -99,21 +104,15 @@ import MainLayout from '../../layouts/MainLayout.astro';
       } else {
         projects.forEach((p: Project) => {
           const projectEl = document.createElement('div');
-          projectEl.className = 'project-card';
+          projectEl.className = 'project-item-compact'; // Use new class for styling
           
-          // !!! THE DEFINITIVE FIX !!!
-          // This HTML structure now EXACTLY matches the public profile page's gallery card,
-          // but with the addition of the 'project-actions' div for the delete button.
+          // !!! THE FIX: This HTML is now a compact, horizontal list item !!!
           projectEl.innerHTML = `
-            <img src="${p.image_url}" alt="${p.title}" class="project-image" />
-            <div class="project-info">
-              <h3 class="project-title">${p.title}</h3>
-              <p class="project-description">${p.description || ''}</p>
+            <img src="${p.image_url}" alt="${p.title}" class="project-item-image-compact" />
+            <div class="project-item-info-compact">
+              <p class="project-item-title-compact">${p.title}</p>
             </div>
-            <!-- The delete button is now separate, allowing the card to be a flex container -->
-            <div class="project-actions">
-                <button class="btn-delete" data-id="${p.id}">Delete</button>
-            </div>
+            <button class="btn-delete" data-id="${p.id}">Delete</button>
           `;
           projectList.appendChild(projectEl);
         });
@@ -286,56 +285,44 @@ import MainLayout from '../../layouts/MainLayout.astro';
   #profile-form-status, #project-form-status { font-size: 0.9rem; color: var(--hint-color); text-align: right; flex-grow: 1; }
   .hint-text { color: var(--hint-color); text-align: center; font-style: italic; }
 
-  /* --- DEFINITIVE PROJECT MANAGEMENT STYLES (COPIED FROM [id].astro) --- */
-  .project-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  @media (min-width: 600px) {
-    .project-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  .project-card {
-    background-color: var(--secondary-bg-color);
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
+  /* --- DEFINITIVE STYLES FOR COMPACT PROJECT MANAGEMENT LIST --- */
+  .project-list-compact { 
     display: flex;
     flex-direction: column;
+    gap: 1rem; 
+    margin-bottom: 2rem; 
+    background-color: var(--secondary-bg-color);
+    padding: 1rem;
+    border-radius: 16px;
   }
   
-  .project-image {
-    width: 100%;
-    height: 250px;
+  .project-item-compact {
+    background-color: var(--bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+  
+  .project-item-image-compact { 
+    width: 50px;
+    height: 50px;
     object-fit: cover;
-  }
-  
-  .project-info {
-    padding: 1.25rem;
-    flex-grow: 1; /* This is key to push the delete button to the bottom */
-  }
-  
-  .project-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0 0 0.5rem;
+    border-radius: 8px;
+    flex-shrink: 0;
   }
 
-  .project-description {
-    font-size: 0.95rem;
-    color: var(--hint-color);
-    line-height: 1.6;
-    margin: 0;
+  .project-item-info-compact {
+    padding: 0;
+    flex-grow: 1;
+    text-align: left;
   }
-  
-  /* New styles specific to the management card's delete button */
-  .project-actions { 
-    padding: 0 1.25rem 1.25rem;
-    /* Removed margin-top, flex-grow on .project-info handles spacing */
+
+  .project-item-title-compact { 
+    font-weight: 600; 
+    margin: 0; 
   }
 
   .btn-delete { 
@@ -343,9 +330,9 @@ import MainLayout from '../../layouts/MainLayout.astro';
     color: white; 
     border: none;
     padding: 0.6rem 1rem;
-    width: 100%;
     border-radius: 8px; 
     cursor: pointer; 
     font-weight: 500;
+    margin-left: auto; /* Push to the right */
   }
 </style>
