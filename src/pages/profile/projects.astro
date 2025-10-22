@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = document.createElement('div');
                 card.className = 'project-manage-card';
                 card.innerHTML = `
-                    <img class="project-card-image" src="${project.image_url}" alt="${project.title}" style="width: 500px; height: auto; object-fit: contain;" />
+                    <img class="project-card-image" src="${project.image_url}" alt="${project.title}" style="width: auto; height: auto; object-fit: contain;" />
                     <div class="info">
                         <h3>${project.title}</h3>
                         <p>${project.description || ''}</p>
@@ -242,6 +242,37 @@ document.addEventListener('DOMContentLoaded', () => {
   /* flex-shrink is no longer needed */
 }
 /* --- END OF FIX --- */
+/* --- NEW STYLES FOR ACTION BUTTONS --- */
+.edit-btn, .delete-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid transparent; /* Start with a transparent border */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.edit-btn {
+  background-color: var(--secondary-bg-color);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+.edit-btn:hover {
+  background-color: var(--border-color);
+}
+
+.delete-btn {
+  background-color: transparent;
+  color: #ef4444; /* A standard "danger" red color */
+  border-color: #ef4444;
+}
+
+.delete-btn:hover {
+  background-color: #ef4444;
+  color: #ffffff; /* White text on hover */
+}
 
 .project-manage-card .info { flex-grow: 1; }
 .project-manage-card h3 { margin: 0 0 0.25rem; }
