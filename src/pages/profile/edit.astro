@@ -276,9 +276,6 @@ import MainLayout from '../../layouts/MainLayout.astro';
   #profile-form-status, #project-form-status { font-size: 0.9rem; color: var(--hint-color); text-align: right; flex-grow: 1; }
   .hint-text { color: var(--hint-color); text-align: center; font-style: italic; }
   /* --- NEW & IMPROVED STYLES FOR PROJECT MANAGEMENT --- */
-.add-project-container {
-  max-width= 50%;
-}
 
 .project-list { 
   display: grid;
@@ -305,9 +302,11 @@ import MainLayout from '../../layouts/MainLayout.astro';
 }
   
 .project-item-image { 
-  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
   /* Use aspect-ratio for a consistent shape */
-  aspect-ratio: 9 / 16;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
   flex-shrink: 0;
   border-bottom: 5px solid var(--border-color);
