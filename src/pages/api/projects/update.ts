@@ -2,39 +2,48 @@ import type { APIRoute } from 'astro';
 import { supabase } from '../../../lib/supabase';
 import { validate } from '../../../lib/auth';
 
-export const POST: APIRoute = async ({ request }) => {
+export const PUT: APIRoute = async ({ request }) => {
   try {
     const { initData, project_id, title, description, image_url } = await request.json();
+
+    if (!initData || !project_id || !title || !image_url) {
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+    }
+
     const user = await validate(initData);
-    if (!user) { return new Response(JSON.stringify({ error: 'Invalid user.' }), { status: 401 }); }
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Invalid user data' }), { status: 401 });
+    }
+    
+    const { data: projectOwner, error: ownerError } = await supabase
+      .from('projects')
+      .select('profiles ( telegram_id )')
+      .eq('id', project_id)
+      .single();
+    
+    // !!! DEFINITIVE FIX !!! Safely access the nested property.
+    // Supabase can return the relation as an object or an array. We handle both.
+    const ownerProfile = Array.isArray(projectOwner?.profiles) 
+      ? projectOwner.profiles[0] 
+      : projectOwner?.profiles;
 
-    // --- THE FIX ---
-    // 1. Get the user's own profile ID first.
-    const { data: userProfile } = await supabase.from('profiles')
-      .select('id').eq('telegram_id', user.id).single();
-    if (!userProfile) {
-      return new Response(JSON.stringify({ error: 'User profile not found.' }), { status: 404 });
+    if (ownerError || !ownerProfile || ownerProfile.telegram_id !== user.id) {
+        return new Response(JSON.stringify({ error: 'Authorization error' }), { status: 403 });
     }
 
-    // 2. Get the project and check if it belongs to this user.
-    const { data: project } = await supabase.from('projects')
-      .select('id, profile_id').eq('id', project_id).single();
-    if (!project || project.profile_id !== userProfile.id) {
-      return new Response(JSON.stringify({ error: 'Authorization error. Project does not belong to user.' }), { status: 403 });
-    }
-    // --- END FIX ---
-
-    // Now that security is confirmed, perform the update.
-    const { data: updatedProject, error } = await supabase.from('projects')
+    const { data, error } = await supabase
+      .from('projects')
       .update({ title, description, image_url })
       .eq('id', project_id)
       .select()
       .single();
-    
-    if (error) throw error;
-    return new Response(JSON.stringify(updatedProject), { status: 200 });
+
+    if (error) { throw error; }
+    return new Response(JSON.stringify(data), { status: 200 });
+
   } catch (err) {
     const error = err as Error;
+    console.error('Update Project API Error:', error.message);
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 };
