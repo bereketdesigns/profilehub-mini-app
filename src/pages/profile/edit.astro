@@ -132,9 +132,16 @@ import MainLayout from '../../layouts/MainLayout.astro';
         if (!data?.profile) throw new Error('Invalid data received.');
         
         userProfile = data.profile;
-        if (!userProfile){
-          throw new Error('Profile data is missing after fetch.')
+
+        // THE FIX: Ensure userProfile.projects is always an array.
+        if (userProfile && !userProfile.projects) {
+             userProfile.projects= [];
         }
+
+        if (!userProfile) { // This check solves the TypeScript errors
+          throw new Error('Profile data is missing after fetch.');
+        }
+
         (document.getElementById('profile-id') as HTMLInputElement).value = userProfile.id.toString();
         (document.getElementById('username') as HTMLInputElement).value = userProfile.username || '';
         (document.getElementById('bio') as HTMLTextAreaElement).value = userProfile.bio || '';
