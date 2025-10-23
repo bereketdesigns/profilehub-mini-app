@@ -7,8 +7,7 @@ import MainLayout from '../layouts/MainLayout.astro';
     <p>Share your profile with the community.</p>
 
     <form id="profile-form" class="profile-form">
-      <!-- We add an 'id' to the username input so we can easily select it -->
-      <label>Username <input type="text" name="username" id="username-input" required /></label>
+      <label>Display Name <input type="text" name="username" required /></label>
       
       <label>Profession
         <select name="profession" required>
@@ -23,7 +22,10 @@ import MainLayout from '../layouts/MainLayout.astro';
       </label>
       
       <label>Bio <textarea name="bio" rows="4" required></textarea></label>
-      <label>Contact Link (Optional) <input type="text" name="contact_link" placeholder="your_telegram_username" /></label>
+
+      <!-- We add an 'id' to the contact_link input -->
+      <label>Contact Link (Optional) <input type="text" name="contact_link" id="contact-link-input" placeholder="Automatically filled..." /></label>
+      
       <label>Profile Picture <input type="file" id="avatar-upload" accept="image/*" required /></label>
       
       <button type="submit" id="submit-btn">Create Profile</button>
@@ -37,21 +39,24 @@ import MainLayout from '../layouts/MainLayout.astro';
   const formStatus = document.getElementById('form-status') as HTMLDivElement;
   const avatarUpload = document.getElementById('avatar-upload') as HTMLInputElement;
 
-  // --- NEW CODE BLOCK: PRE-FILL FORM ---
+  // --- THIS IS THE CORRECTED PRE-FILL LOGIC ---
   document.addEventListener('DOMContentLoaded', () => {
     try {
       const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
       if (tgUser) {
-        const usernameInput = document.getElementById('username-input') as HTMLInputElement;
-        if (usernameInput && tgUser.username) {
-          usernameInput.value = tgUser.username;
+        // Target the contact link input field
+        const contactLinkInput = document.getElementById('contact-link-input') as HTMLInputElement;
+        // Check if the input exists and if the user has a Telegram username
+        if (contactLinkInput && tgUser.username) {
+          // Pre-fill it with just the username
+          contactLinkInput.value = tgUser.username;
         }
       }
     } catch (e) {
-      console.warn("Could not prefill form from Telegram data:", e);
+      console.warn("Could not prefill contact link from Telegram data:", e);
     }
   });
-  // --- END NEW CODE BLOCK ---
+  // --- END CORRECTED LOGIC ---
 
   async function uploadFile(file: File): Promise<string> {
     const response = await fetch('/api/profiles/upload', {
@@ -123,7 +128,7 @@ import MainLayout from '../layouts/MainLayout.astro';
     border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color);
   }
   .profile-form button {
-    background-color: var(--accent-color); /* Using our brand color */
+    background-color: var(--accent-color);
     color: var(--button-text-color);
     padding: 0.8rem; border: none; border-radius: 8px; font-size: 1.1rem;
     font-weight: 600; cursor: pointer; margin-top: 1rem;
