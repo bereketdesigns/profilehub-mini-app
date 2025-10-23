@@ -49,7 +49,7 @@ import MainLayout from '../layouts/MainLayout.astro';
         // Check if the input exists and if the user has a Telegram username
         if (contactLinkInput && tgUser.username) {
           // Pre-fill it with just the username
-          contactLinkInput.value = 'https://t.me/${tgUser.username}';
+          contactLinkInput.value = `https://t.me/${tgUser.username}`;
         }
       }
     } catch (e) {
