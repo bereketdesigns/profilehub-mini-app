@@ -7,7 +7,8 @@ import MainLayout from '../layouts/MainLayout.astro';
     <p>Share your profile with the community.</p>
 
     <form id="profile-form" class="profile-form">
-      <label>Username <input type="text" name="username" required /></label>
+      <!-- We add an 'id' to the username input so we can easily select it -->
+      <label>Username <input type="text" name="username" id="username-input" required /></label>
       
       <label>Profession
         <select name="profession" required>
@@ -22,7 +23,7 @@ import MainLayout from '../layouts/MainLayout.astro';
       </label>
       
       <label>Bio <textarea name="bio" rows="4" required></textarea></label>
-      <label>Contact Link (Optional) <input type="text" name="contact_link" placeholder="@yourusername" /></label>
+      <label>Contact Link (Optional) <input type="text" name="contact_link" placeholder="your_telegram_username" /></label>
       <label>Profile Picture <input type="file" id="avatar-upload" accept="image/*" required /></label>
       
       <button type="submit" id="submit-btn">Create Profile</button>
@@ -31,10 +32,26 @@ import MainLayout from '../layouts/MainLayout.astro';
   </div>
 </MainLayout>
 <script>
-  const profileForm = document.getElementById('profile-form') as HTMLFormElement | null;
-  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement | null;
-  const formStatus = document.getElementById('form-status') as HTMLDivElement | null;
-  const avatarUpload = document.getElementById('avatar-upload') as HTMLInputElement | null;
+  const profileForm = document.getElementById('profile-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const formStatus = document.getElementById('form-status') as HTMLDivElement;
+  const avatarUpload = document.getElementById('avatar-upload') as HTMLInputElement;
+
+  // --- NEW CODE BLOCK: PRE-FILL FORM ---
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+      if (tgUser) {
+        const usernameInput = document.getElementById('username-input') as HTMLInputElement;
+        if (usernameInput && tgUser.username) {
+          usernameInput.value = tgUser.username;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not prefill form from Telegram data:", e);
+    }
+  });
+  // --- END NEW CODE BLOCK ---
 
   async function uploadFile(file: File): Promise<string> {
     const response = await fetch('/api/profiles/upload', {
@@ -73,7 +90,7 @@ import MainLayout from '../layouts/MainLayout.astro';
         bio: formData.get('bio'),
         contact_link: formData.get('contact_link'),
         profile_picture_url: uploadedImageUrl,
-        profession: formData.get('profession'), // Add the new field
+        profession: formData.get('profession'),
         initData: window.Telegram.WebApp.initData,
       };
       const createResponse = await fetch('/api/profiles/create', {
@@ -106,7 +123,8 @@ import MainLayout from '../layouts/MainLayout.astro';
     border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color);
   }
   .profile-form button {
-    background-color: var(--tg-theme-button-color, #007aff); color: var(--tg-theme-button-text-color, #fff);
+    background-color: var(--accent-color); /* Using our brand color */
+    color: var(--button-text-color);
     padding: 0.8rem; border: none; border-radius: 8px; font-size: 1.1rem;
     font-weight: 600; cursor: pointer; margin-top: 1rem;
   }

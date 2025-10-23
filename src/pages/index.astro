@@ -1,7 +1,7 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import { supabase } from '../lib/supabase';
-import type { Product as Profile } from '@/lib/types';
+import type { Profile } from '../lib/types';
 
 // Fetch all profiles from the database on the server
 const { data: profiles, error } = await supabase
