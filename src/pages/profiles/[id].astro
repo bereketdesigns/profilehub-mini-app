@@ -2,7 +2,6 @@
 import MainLayout from '../../layouts/MainLayout.astro';
 import { supabase } from '../../lib/supabase';
 import type { Profile } from '../../lib/types';
-import { getOptimizedImageUrl } from '../../lib/utils';
 
 const { id } = Astro.params;
 
@@ -12,101 +11,133 @@ const { data, error } = await supabase
   .eq('id', id)
   .single();
 
+// Cast the data to our Profile type
 const profile = data as Profile | null;
 
+// Handle the case where the profile is not found
 if (error || !profile) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 ---
 <MainLayout title={profile.username ? `${profile.username} | DivineX` : 'Profile | DivineX'}>
-  {profile ? (
-    <div class="profile-detail-page">
-      <div class="back-link-wrapper">
-        <a href="/" class="back-link">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
-          <span>All Profiles</span>
-        </a>
-      </div>
-
-      <header class="profile-header">
-        <img 
-          src={getOptimizedImageUrl(profile.profile_picture_url, 240, 240)} 
-          alt={profile.username} 
-          class="profile-header-avatar"
-          width="120"
-          height="120"
-        />
-        <div class="profile-header-info">
-          <h1 class="profile-header-username">{profile.username}</h1>
-          {profile.profession && <p class="profile-header-profession">{profile.profession}</p>}
-          <div class="profile-actions">
-            {profile.contact_link && (
-              <a href={profile.contact_link} class="contact-button" target="_blank" rel="noopener noreferrer">Contact</a>
-            )}
-            {profile.portfolio_link && (
-              <a href={profile.portfolio_link} class="portfolio-button" target="_blank" rel="noopener noreferrer">Portfolio</a>
-            )}
-          </div>
-        </div>
-      </header>
-
-      <section class="profile-bio-full">
-        <h2>About Me</h2>
-        <p>{profile.bio || 'No bio provided.'}</p>
-      </section>
-
-      <section class="project-gallery">
-        <h2>My Projects</h2>
-        {profile.projects && profile.projects.length > 0 ? (
-          <div class="project-grid">
-            {profile.projects.map(project => (
-              <div class="project-card">
-                <img 
-                  src={getOptimizedImageUrl(project.image_url, 800, 500)} 
-                  alt={project.title} 
-                  class="project-image"
-                  width="400"
-                  height="250"
-                  loading="lazy"
-                />
-                <div class="project-info">
-                  <h3 class="project-title">{project.title}</h3>
-                  <p class="project-description">{project.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p class="no-projects-message">This user hasn't added any projects yet.</p>
-        )}
-      </section>
-    </div>
-  ) : (
-    <div class="not-found-container">
-      <h1>404 - Profile Not Found</h1>
-      <p>The profile you are looking for does not exist.</p>
+  <div class="profile-detail-page">
+    <div class="back-link-wrapper">
       <a href="/" class="back-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
-        <span>Go back to All Profiles</span>
+        <span>All Profiles</span>
       </a>
     </div>
-  )}
+
+    <header class="profile-header">
+      <img src={profile.profile_picture_url || '/default-avatar.png'} alt={profile.username} class="profile-header-avatar" />
+      <div class="profile-header-info">
+        <h1 class="profile-header-username">{profile.username}</h1>
+        {profile.profession && <p class="profile-header-profession">{profile.profession}</p>}
+        
+        <!-- This is the new button group -->
+        <div class="profile-actions">
+          {profile.contact_link && (
+            <a href={profile.contact_link} class="contact-button" target="_blank" rel="noopener noreferrer">Contact</a>
+          )}
+          {profile.portfolio_link && (
+            <a href={profile.portfolio_link} class="portfolio-button" target="_blank" rel="noopener noreferrer">Portfolio</a>
+          )}
+        </div>
+
+      </div>
+    </header>
+
+    <section class="profile-bio-full">
+      <h2>About Me</h2>
+      <p>{profile.bio || 'No bio provided.'}</p>
+    </section>
+
+    <section class="project-gallery">
+      <h2>My Projects</h2>
+      {profile.projects && profile.projects.length > 0 ? (
+        <div class="project-grid">
+          {profile.projects.map(project => (
+            <div class="project-card">
+              <img src={project.image_url} alt={project.title} class="project-image" />
+              <div class="project-info">
+                <h3 class="project-title">{project.title}</h3>
+                <p class="project-description">{project.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p class="no-projects-message">This user hasn't added any projects yet.</p>
+      )}
+    </section>
+  </div>
 </MainLayout>
+
 <style>
   .profile-detail-page { padding-bottom: 2rem; }
   .back-link-wrapper { margin-bottom: 2rem; }
   .back-link { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500; color: var(--hint-color); text-decoration: none; transition: color 0.2s; }
   .back-link:hover { color: var(--link-color); }
-  .profile-header { display: flex; flex-direction: row; align-items: center; gap: 1.5rem; text-align: left; margin-bottom: 3rem; }
-  .profile-header-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg-color); box-shadow: 0 4px 15px rgba(0,0,0,0.1); flex-shrink: 0; }
-  .profile-header-info { display: flex; flex-direction: column; gap: 0; }
-  .profile-header-username { font-size: 2rem; font-weight: 700; margin: 0; }
-  .profile-header-profession { font-size: 1.1rem; font-weight: 500; color: var(--brand-color); margin: 0.25rem 0 0; }
-  .profile-actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
-  .contact-button, .portfolio-button { padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: opacity 0.2s; color: var(--button-text-color); }
-  .contact-button { background-color: var(--accent-color); }
-  .portfolio-button { background-color: var(--brand-color); }
-  .contact-button:hover, .portfolio-button:hover { opacity: 0.85; }
+  
+  .profile-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: left;
+    margin-bottom: 3rem;
+  }
+  .profile-header-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--bg-color);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+  .profile-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .profile-header-username {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  .profile-header-profession {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--brand-color);
+    margin: 0.25rem 0 0;
+  }
+
+  /* These are the new styles for the button group */
+  .profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .contact-button, .portfolio-button {
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s;
+    color: var(--button-text-color);
+  }
+  .contact-button {
+    background-color: var(--accent-color); /* Orange */
+  }
+  .portfolio-button {
+    background-color: var(--brand-color); /* Blue */
+  }
+  .contact-button:hover, .portfolio-button:hover {
+    opacity: 0.85;
+  }
+
   .profile-bio-full { margin-bottom: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
   .profile-bio-full h2, .project-gallery h2 { font-size: 1.5rem; margin-bottom: 1rem; color: var(--hint-color); font-weight: 500; }
   .profile-bio-full p { font-size: 1.1rem; line-height: 1.7; white-space: pre-wrap; }
@@ -119,5 +150,4 @@ if (error || !profile) {
   .project-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem; }
   .project-description { font-size: 0.95rem; color: var(--hint-color); line-height: 1.6; margin: 0; }
   .no-projects-message { color: var(--hint-color); }
-  .not-found-container { text-align: center; padding: 4rem 1rem; }
 </style>
