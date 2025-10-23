@@ -1,6 +1,5 @@
 // This file will store all the custom data types for our application.
 
-// Defines the structure of a single portfolio project.
 export interface Project {
   id: number;
   created_at: string;
@@ -11,7 +10,6 @@ export interface Project {
   display_order: number;
 }
 
-// Defines the structure of a user profile, including an array of their projects.
 export interface Profile {
   id: number;
   created_at: string;
@@ -21,5 +19,7 @@ export interface Profile {
   profile_picture_url: string;
   contact_link: string | null;
   profession: string | null;
-  projects: Project[]; // A profile can have an array of Project objects
+  // !!! THIS IS THE FIX: Add the new property !!!
+  portfolio_link: string | null;
+  projects: Project[];
 }

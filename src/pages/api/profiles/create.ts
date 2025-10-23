@@ -2,9 +2,20 @@ import type { APIRoute } from 'astro';
 import { supabase } from '../../../lib/supabase';
 import { validate } from '../../../lib/auth';
 
+function formatContactLink(input: string | null | undefined): string | null {
+  if (!input || input.trim() === '') {
+    return null;
+  }
+  const cleanedInput = input.trim().replace(/^@/, '');
+  if (cleanedInput.startsWith('http://') || cleanedInput.startsWith('https://')) {
+    return cleanedInput;
+  }
+  return `https://t.me/${cleanedInput}`;
+}
+
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { initData, username, bio, profile_picture_url, contact_link, profession } = await request.json();
+    const { initData, username, bio, profile_picture_url, contact_link, portfolio_link, profession } = await request.json();
     
     const user = await validate(initData);
     if (!user) {
@@ -16,12 +27,15 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Profile already exists.' }), { status: 409 });
     }
 
+    const formattedContactLink = formatContactLink(contact_link);
+
     const { data, error } = await supabase.from('profiles').insert([{ 
         telegram_id: user.id, 
         username, 
         bio, 
         profile_picture_url, 
-        contact_link, 
+        contact_link: formattedContactLink,
+        portfolio_link, // Add the new field
         profession 
       }]).select().single();
 
