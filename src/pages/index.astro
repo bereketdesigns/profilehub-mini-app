@@ -2,20 +2,17 @@
 import MainLayout from '../layouts/MainLayout.astro';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../lib/types';
+import { getOptimizedImageUrl } from '../lib/utils'; // Import our new helper
 
-// This code now runs on the server every time the page is requested.
 const { url } = Astro;
 
-// Get the 'sort' parameter from the URL, defaulting to 'oldest' as requested.
 const sortBy = url.searchParams.get('sort') || 'oldest';
 
-// Set the sorting options for the database query based on the URL parameter.
 const sortOptions = {
   column: 'created_at',
-  ascending: sortBy === 'oldest', // true for oldest, false for newest
+  ascending: sortBy === 'oldest',
 };
 
-// Fetch the profiles from Supabase with the dynamic sorting applied.
 const { data: profiles, error } = await supabase
   .from('profiles')
   .select('*')
@@ -23,7 +20,6 @@ const { data: profiles, error } = await supabase
 
 if (error) { console.error("Error fetching profiles:", error.message); }
 
-// Automatically generate the list of professions for the filter buttons.
 const professions = ['All', ...new Set(profiles?.map(p => p.profession).filter(Boolean) || [])];
 ---
 <MainLayout title="DivineX - User Profiles">
@@ -60,7 +56,14 @@ const professions = ['All', ...new Set(profiles?.map(p => p.profession).filter(B
           data-profession={profile.profession || ''}
         >
           <div class="profile-card">
-            <img src={profile.profile_picture_url || '/default-avatar.png'} alt={profile.username || 'User Avatar'} class="profile-avatar" />
+            <img 
+              src={getOptimizedImageUrl(profile.profile_picture_url, 200, 200)} 
+              alt={profile.username || 'User Avatar'} 
+              class="profile-avatar"
+              width="100"
+              height="100"
+              loading="lazy"
+            />
             <h2 class="profile-username">{profile.username || 'Anonymous User'}</h2>
             {profile.profession && <p class="profile-profession">{profile.profession}</p>}
             <p class="profile-bio-truncated">{profile.bio || 'No bio provided.'}</p>
